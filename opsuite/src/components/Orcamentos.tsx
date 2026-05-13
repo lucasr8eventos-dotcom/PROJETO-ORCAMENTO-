@@ -103,17 +103,17 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
                               {(['enviado','aprovado','aguardando','recusado'] as OrcamentoStatus[]).map(s=>(
                                 <button key={s} onClick={()=>{onStatusChange(o.id,s);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
                                   onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-                                  onMouseLeave={e=>(e.currentTarget.style.background='none')}
+                                  onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
                                 >Marcar como {s}</button>
                               ))}
                               <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
                               <button onClick={()=>{onEditar(o);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
                                 onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-                                onMouseLeave={e=>(e.currentTarget.style.background='none')}
+                                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
                               >Editar orçamento</button>
                               <button onClick={()=>{onDelete(o.id);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--red)' }}
                                 onMouseEnter={e=>(e.currentTarget.style.background='var(--red-bg)')}
-                                onMouseLeave={e=>(e.currentTarget.style.background='none')}
+                                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
                               >Excluir</button>
                             </div>
                           )}

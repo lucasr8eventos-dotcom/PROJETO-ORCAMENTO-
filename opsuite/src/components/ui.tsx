@@ -102,7 +102,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
 
 // ── StatCard ─────────────────────────────────────────────────────────────────
 export function StatCard({ label, value, badge, iconBg, icon }: {
-  label: string; value: string; badge?: string; badgeUp?: boolean;
+  label: string; value: string; badge?: string;
   iconBg: string; icon: React.ReactNode;
 }) {
   const up = badge?.startsWith('↑');
@@ -185,7 +185,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: { id: string; label: st
 const avatarColors = ['#1D9E75','#185FA5','#BA7517','#A32D2D','#0F6E56','#533DB7','#993556'];
 export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   const initials = name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
-  const color = avatarColors[name.charCodeAt(0) % avatarColors.length];
+  const color = avatarColors[(name.charCodeAt(0) || 0) % avatarColors.length];
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', background: color,
