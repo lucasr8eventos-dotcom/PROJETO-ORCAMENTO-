@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Produto } from '../types';
-import { Card, Btn, FormField, Input, Select, Modal, Tabs, StatusBadge, fmtMoeda } from './ui';
+import { Card, Btn, FormField, Input, Select, Modal, Tabs, fmtMoeda } from './ui';
 import { v4 as uuid } from 'uuid';
 
 interface Props {
@@ -82,7 +82,12 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
                     <td style={{ padding:'11px 16px',fontSize:12.5,color:'var(--text2)' }}>/{p.unidade}</td>
                     <td style={{ padding:'11px 16px',fontSize:13 }}>{p.estoque !== null ? `${p.estoque} unid.` : '—'}</td>
                     <td style={{ padding:'11px 16px' }}>
-                      <StatusBadge status={p.ativo ? 'aprovado' : 'recusado'} />
+                      <span style={{ display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:20,fontSize:11.5,fontWeight:500,
+                        background: p.ativo ? 'var(--green-bg)' : 'var(--surface2)',
+                        color: p.ativo ? 'var(--green)' : 'var(--text3)' }}>
+                        <span style={{width:5,height:5,borderRadius:'50%',background:'currentColor'}} />
+                        {p.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
                     </td>
                     <td style={{ padding:'11px 16px' }}>
                       <button style={{ background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:16 }}>✏️</button>

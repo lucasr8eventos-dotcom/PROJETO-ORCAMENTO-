@@ -103,7 +103,7 @@ export default function Tarefas({ tarefas, onSalvar, onDelete, onToggle }: Props
           <FormField label="Título *"><Input value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Descreva a tarefa..." /></FormField>
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14 }}>
             <FormField label="Prioridade">
-              <Select value={form.prioridade} onChange={e=>setForm({...form,prioridade:e.target.value as any})}>
+              <Select value={form.prioridade} onChange={e=>setForm({...form,prioridade:e.target.value as 'alta'|'media'|'baixa'})}>
                 <option value="alta">Alta</option>
                 <option value="media">Média</option>
                 <option value="baixa">Baixa</option>
