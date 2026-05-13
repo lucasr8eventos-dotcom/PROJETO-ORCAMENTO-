@@ -83,8 +83,8 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
                     <td style={{ padding:'11px 16px',fontSize:13 }}>{p.estoque !== null ? `${p.estoque} unid.` : '—'}</td>
                     <td style={{ padding:'11px 16px' }}>
                       <span style={{ display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:20,fontSize:11.5,fontWeight:500,
-                        background: p.ativo ? 'var(--green-bg)' : 'var(--surface2)',
-                        color: p.ativo ? 'var(--green)' : 'var(--text3)' }}>
+                        background: p.ativo ? 'var(--green-bg)' : 'var(--red-bg)',
+                        color: p.ativo ? 'var(--green)' : 'var(--red)' }}>
                         <span style={{width:5,height:5,borderRadius:'50%',background:'currentColor'}} />
                         {p.ativo ? 'Ativo' : 'Inativo'}
                       </span>
