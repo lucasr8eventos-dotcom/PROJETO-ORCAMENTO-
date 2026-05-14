@@ -73,7 +73,8 @@ export default function Clientes({ clientes, onSalvar, onDelete }: Props) {
 
       <Modal open={modal} onClose={()=>setModal(false)} title={form.id ? 'Editar cliente' : 'Novo cliente'}>
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
-          <FormField label="Nome *"><Input value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Nome completo ou razão social" /></FormField>
+          <FormField label="Nome *"><Input value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Nome completo" /></FormField>
+          <FormField label="Empresa / Razão Social"><Input value={form.empresa} onChange={e=>setForm({...form,empresa:e.target.value})} placeholder="Nome da empresa" /></FormField>
           <FormField label="E-mail"><Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
           <FormField label="Telefone"><TelefoneInput value={form.telefone} onChange={v=>setForm({...form,telefone:v})} /></FormField>
           <FormField label="CPF / CNPJ"><CpfCnpjInput value={form.cnpj} onChange={v=>setForm({...form,cnpj:v})} /></FormField>

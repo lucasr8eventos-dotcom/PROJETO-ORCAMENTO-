@@ -46,7 +46,9 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
     return months.map(m => ({ mes: MONTH_NAMES[m], emitido: map[m].emitido, aprovado: map[m].aprovado }));
   }, [orcamentos]);
 
-  const recentes = orcamentos.slice(0, 6);
+  const recentes = [...orcamentos]
+    .sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime())
+    .slice(0, 6);
 
   return (
     <div>
@@ -58,7 +60,9 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
           { label: 'Aprovados',      count: doMes.filter(o=>o.status==='aprovado').length,        valor: doMes.filter(o=>o.status==='aprovado').reduce((s,o)=>s+o.total,0),        cor: 'var(--green)' },
           { label: 'Total do mês',   count: doMes.length,                                         valor: doMes.reduce((s,o)=>s+o.total,0),                                         cor: 'var(--blue)' },
         ].map(card => (
-          <div key={card.label} style={{ flex:1,minWidth:160,padding:'16px 20px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface)' }}>
+          <div key={card.label} onClick={onVerOrcamentos} style={{ flex:1,minWidth:160,padding:'16px 20px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',transition:'box-shadow .15s' }}
+            onMouseEnter={e=>(e.currentTarget.style.boxShadow='0 0 0 2px var(--border2)')}
+            onMouseLeave={e=>(e.currentTarget.style.boxShadow='none')}>
             <div style={{ fontSize:12,color:'var(--text3)',marginBottom:8 }}>{card.label} ({card.count})</div>
             <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:card.cor }}>{fmtMoeda(card.valor)}</div>
           </div>
@@ -123,7 +127,7 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
             </thead>
             <tbody>
               {recentes.map(o => (
-                <tr key={o.id} style={{ cursor:'pointer' }} onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                <tr key={o.id} onClick={()=>onEditar(o)} style={{ cursor:'pointer' }} onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
                   <td style={{ padding:'11px 14px',fontWeight:500,color:'var(--blue)',fontSize:13 }}>#{o.numero}</td>
                   <td style={{ padding:'11px 14px',fontSize:13 }}>{o.clienteNome}</td>
                   <td style={{ padding:'11px 14px',fontSize:13,fontWeight:500 }}>{fmtMoeda(o.total)}</td>
@@ -131,7 +135,7 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
                   <td style={{ padding:'11px 14px',fontSize:12.5,color:'var(--text2)' }}>{format(new Date(o.validade+'T12:00:00'),'dd/MM',{locale:ptBR})}</td>
                   <td style={{ padding:'11px 14px' }}><StatusBadge status={o.status} /></td>
                   <td style={{ padding:'11px 14px' }}>
-                    <button onClick={() => onEditar(o)} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:18 }}>⋯</button>
+                    <span style={{ color:'var(--text3)',fontSize:18 }}>⋯</span>
                   </td>
                 </tr>
               ))}

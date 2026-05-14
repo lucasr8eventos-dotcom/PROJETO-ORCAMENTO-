@@ -324,7 +324,8 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
       <Modal open={novoClienteModal} onClose={()=>setNovoClienteModal(false)} title="Cadastrar novo cliente">
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
-          <FormField label="Nome *"><Input value={novoClienteForm.nome} onChange={e=>setNovoClienteForm({...novoClienteForm,nome:e.target.value})} placeholder="Nome completo ou razão social" /></FormField>
+          <FormField label="Nome *"><Input value={novoClienteForm.nome} onChange={e=>setNovoClienteForm({...novoClienteForm,nome:e.target.value})} placeholder="Nome completo" /></FormField>
+          <FormField label="Empresa / Razão Social"><Input value={novoClienteForm.empresa} onChange={e=>setNovoClienteForm({...novoClienteForm,empresa:e.target.value})} placeholder="Nome da empresa" /></FormField>
           <FormField label="E-mail"><Input type="email" value={novoClienteForm.email} onChange={e=>setNovoClienteForm({...novoClienteForm,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
           <FormField label="Telefone"><TelefoneInput value={novoClienteForm.telefone} onChange={v=>setNovoClienteForm({...novoClienteForm,telefone:v})} /></FormField>
           <FormField label="CPF / CNPJ"><CpfCnpjInput value={novoClienteForm.cnpj} onChange={v=>setNovoClienteForm({...novoClienteForm,cnpj:v})} /></FormField>
