@@ -1,4 +1,4 @@
-import { Orcamento, Cliente, Produto, Tarefa, Evento, Usuario } from './types';
+import { Orcamento, Cliente, Produto, Tarefa, Evento, Usuario, Venda, OrdemServico } from './types';
 import { v4 as uuid } from 'uuid';
 import { format, addDays } from 'date-fns';
 
@@ -94,6 +94,30 @@ export const eventosIniciais: Evento[] = [
 export const usuariosIniciais: Usuario[] = [
   { id: uuid(), nome: 'Administrador', email: 'admin@empresa.com', senha: 'admin123', role: 'admin', ativo: true, criadoEm: fmt(hoje) },
 ];
+
+export const vendasIniciais: Venda[] = [];
+export const ordensServicoIniciais: OrdemServico[] = [];
+
+export function proximoNumeroVenda(vendas: Venda[]): string {
+  const nums = vendas.map(v => parseInt(v.numero.replace('VND-', ''), 10)).filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `VND-${String(next).padStart(4, '0')}`;
+}
+
+export function proximoNumeroOS(ordens: OrdemServico[]): string {
+  const nums = ordens.map(o => parseInt(o.numero.replace('OS-', ''), 10)).filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `OS-${String(next).padStart(4, '0')}`;
+}
+
+export function calcularSituacaoVenda(pagamentos: Venda['pagamentos']): Venda['situacao'] {
+  if (!pagamentos.length) return 'pendente';
+  const totalPago = pagamentos.filter(p => p.pago).reduce((s, p) => s + p.valor, 0);
+  const totalGeral = pagamentos.reduce((s, p) => s + p.valor, 0);
+  if (totalPago === 0) return 'pendente';
+  if (totalPago >= totalGeral) return 'quitado';
+  return 'parcial';
+}
 
 export function calcularTotais(orc: Pick<Orcamento, 'itens' | 'desconto' | 'impostos'>): { subtotal: number; total: number } {
   const subtotal = orc.itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0);
