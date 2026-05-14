@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { OrdemServico as OS, OSStatus } from '../types';
 import { fmtMoeda } from './ui';
 import { format } from 'date-fns';
@@ -39,6 +40,148 @@ const inp: React.CSSProperties = {
 const textareaStyle: React.CSSProperties = {
   ...inp, resize: 'vertical' as const, minHeight: 72,
 };
+
+function OsPrintModal({ osPrint, onClose, statusMap }: { osPrint: OS; onClose: () => void; statusMap: Record<OSStatus, { label: string; color: string; bg: string }> }) {
+  useEffect(() => {
+    document.body.classList.add('imprimindo');
+    return () => document.body.classList.remove('imprimindo');
+  }, []);
+
+  return (
+    <div className="os-impressao-overlay"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="os-impressao-caixa"
+        style={{ background: '#fff', color: '#111', borderRadius: 16, width: '100%', maxWidth: 720, maxHeight: '95vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif" }}>
+        {/* Barra de ações (não imprime) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }} className="no-print">
+          <span style={{ fontWeight: 600, fontSize: 14 }}>Visualização da OS · {osPrint.numero}</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => window.print()}
+              style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13 }}>🖨️ Imprimir</button>
+            <button onClick={onClose}
+              style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13 }}>Fechar</button>
+          </div>
+        </div>
+
+        {/* Conteúdo imprimível */}
+        <div style={{ padding: '28px 36px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
+            <div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 26, letterSpacing: '-0.5px', color: '#111' }}>ORDEM DE SERVIÇO</div>
+              <div style={{ fontSize: 15, color: '#6b7280', marginTop: 2 }}>OpSuite · Plataforma Operacional</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 24, color: '#1d4ed8' }}>{osPrint.numero}</div>
+              <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
+                Emitida em {format(new Date(osPrint.criadoEm + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+              </div>
+              <div style={{ marginTop: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: statusMap[osPrint.status].bg, color: statusMap[osPrint.status].color }}>
+                  {statusMap[osPrint.status].label.toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: 2, background: '#e5e7eb', marginBottom: 24, borderRadius: 2 }} />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 22 }}>
+            <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>CLIENTE</div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#111' }}>{osPrint.clienteNome}</div>
+              {osPrint.contato && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>Contato: {osPrint.contato}</div>}
+              <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>Ref. {osPrint.orcamentoNumero} · {osPrint.vendaNumero}</div>
+            </div>
+            <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>LOCAL DO EVENTO</div>
+              <div style={{ fontSize: 13, color: osPrint.enderecoEvento ? '#111' : '#9ca3af', fontStyle: osPrint.enderecoEvento ? 'normal' : 'italic' }}>
+                {osPrint.enderecoEvento || 'Não informado'}
+              </div>
+            </div>
+            <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>DATAS E HORÁRIOS</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ fontSize: 13, color: '#374151' }}>
+                  <span style={{ color: '#9ca3af', fontSize: 11 }}>Montagem: </span>
+                  <strong>{osPrint.dataMontagem ? format(new Date(osPrint.dataMontagem + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</strong>
+                </div>
+                <div style={{ fontSize: 13, color: '#374151' }}>
+                  <span style={{ color: '#9ca3af', fontSize: 11 }}>Retirada: </span>
+                  <strong>{osPrint.dataRetirada ? format(new Date(osPrint.dataRetirada + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</strong>
+                </div>
+                <div style={{ fontSize: 13, color: '#374151' }}>
+                  <span style={{ color: '#9ca3af', fontSize: 11 }}>Horário: </span>
+                  <strong>{osPrint.horarioInicio || '—'}{osPrint.horarioFim ? ` às ${osPrint.horarioFim}` : ''}</strong>
+                </div>
+              </div>
+            </div>
+            <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>EQUIPE OPERACIONAL</div>
+              <div style={{ fontSize: 13, color: osPrint.equipe ? '#111' : '#9ca3af', fontStyle: osPrint.equipe ? 'normal' : 'italic', marginBottom: 6 }}>
+                {osPrint.equipe || 'Não informado'}
+              </div>
+              <div style={{ fontSize: 12, color: '#374151' }}>
+                <span style={{ color: '#9ca3af', fontSize: 11 }}>Motorista: </span>
+                <span style={{ color: osPrint.motorista ? '#111' : '#9ca3af', fontStyle: osPrint.motorista ? 'normal' : 'italic' }}>
+                  {osPrint.motorista || 'Não informado'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 10 }}>MATERIAIS / ITENS LOCADOS</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#f3f4f6' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>DESCRIÇÃO</th>
+                  <th style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>QTD</th>
+                  <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>VALOR UNIT.</th>
+                  <th style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>PERÍODO</th>
+                  <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {osPrint.itens.map(item => (
+                  <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 12px', color: '#111', fontWeight: 500 }}>{item.descricao}</td>
+                    <td style={{ padding: '10px 12px', textAlign: 'center', color: '#374151' }}>{item.quantidade}</td>
+                    <td style={{ padding: '10px 12px', textAlign: 'right', color: '#374151' }}>{fmtMoeda(item.valorUnitario)}</td>
+                    <td style={{ padding: '10px 12px', textAlign: 'center', color: '#6b7280' }}>{item.periodo || '—'}</td>
+                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#111' }}>{fmtMoeda(item.quantidade * item.valorUnitario)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {osPrint.observacoesOperacionais && (
+            <div style={{ background: '#fffbeb', borderRadius: 10, padding: '14px 16px', marginBottom: 20, border: '1px solid #fde68a' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#92400e', letterSpacing: '1px', marginBottom: 6 }}>⚠️ OBSERVAÇÕES OPERACIONAIS</div>
+              <div style={{ fontSize: 13, color: '#78350f', lineHeight: 1.6 }}>{osPrint.observacoesOperacionais}</div>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginTop: 32 }}>
+            {['Responsável Operacional', 'Motorista', 'Cliente / Responsável'].map(label => (
+              <div key={label} style={{ textAlign: 'center' }}>
+                <div style={{ borderTop: '1px solid #d1d5db', paddingTop: 8, marginTop: 32 }}>
+                  <div style={{ fontSize: 11, color: '#9ca3af' }}>{label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
+            <span>OpSuite — Plataforma Operacional</span>
+            <span>{osPrint.numero} · {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, filtroVendaId, onLimparFiltro }: Props) {
   const isAdmin = userRole === 'admin';
@@ -334,154 +477,10 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
         </div>
       )}
 
-      {/* Modal de impressão / visualização da OS */}
-      {osPrint && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-          onClick={e => { if (e.target === e.currentTarget) setPrintId(null); }}>
-          <div style={{ background: '#fff', color: '#111', borderRadius: 16, width: '100%', maxWidth: 720, maxHeight: '95vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif" }}>
-            {/* Barra de ações (não imprime) */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }} className="no-print">
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Visualização da OS · {osPrint.numero}</span>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => window.print()}
-                  style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13 }}>🖨️ Imprimir</button>
-                <button onClick={() => setPrintId(null)}
-                  style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13 }}>Fechar</button>
-              </div>
-            </div>
-
-            {/* Conteúdo imprimível */}
-            <div style={{ padding: '28px 36px' }}>
-              {/* Cabeçalho */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
-                <div>
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 26, letterSpacing: '-0.5px', color: '#111' }}>
-                    ORDEM DE SERVIÇO
-                  </div>
-                  <div style={{ fontSize: 15, color: '#6b7280', marginTop: 2 }}>OpSuite · Plataforma Operacional</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 24, color: '#1d4ed8' }}>{osPrint.numero}</div>
-                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
-                    Emitida em {format(new Date(osPrint.criadoEm + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}
-                  </div>
-                  <div style={{ marginTop: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: statusMap[osPrint.status].bg, color: statusMap[osPrint.status].color }}>
-                      {statusMap[osPrint.status].label.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Linha divisória */}
-              <div style={{ height: 2, background: '#e5e7eb', marginBottom: 24, borderRadius: 2 }} />
-
-              {/* Grid principal */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 22 }}>
-                {/* Cliente */}
-                <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>CLIENTE</div>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: '#111' }}>{osPrint.clienteNome}</div>
-                  {osPrint.contato && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>Contato: {osPrint.contato}</div>}
-                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>Ref. {osPrint.orcamentoNumero} · {osPrint.vendaNumero}</div>
-                </div>
-
-                {/* Endereço do evento */}
-                <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>LOCAL DO EVENTO</div>
-                  <div style={{ fontSize: 13, color: osPrint.enderecoEvento ? '#111' : '#9ca3af', fontStyle: osPrint.enderecoEvento ? 'normal' : 'italic' }}>
-                    {osPrint.enderecoEvento || 'Não informado'}
-                  </div>
-                </div>
-
-                {/* Datas */}
-                <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>DATAS E HORÁRIOS</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ fontSize: 13, color: '#374151' }}>
-                      <span style={{ color: '#9ca3af', fontSize: 11 }}>Montagem: </span>
-                      <strong>{osPrint.dataMontagem ? format(new Date(osPrint.dataMontagem + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</strong>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#374151' }}>
-                      <span style={{ color: '#9ca3af', fontSize: 11 }}>Retirada: </span>
-                      <strong>{osPrint.dataRetirada ? format(new Date(osPrint.dataRetirada + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</strong>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#374151' }}>
-                      <span style={{ color: '#9ca3af', fontSize: 11 }}>Horário: </span>
-                      <strong>{osPrint.horarioInicio || '—'}{osPrint.horarioFim ? ` às ${osPrint.horarioFim}` : ''}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Equipe */}
-                <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 8 }}>EQUIPE OPERACIONAL</div>
-                  <div style={{ fontSize: 13, color: osPrint.equipe ? '#111' : '#9ca3af', fontStyle: osPrint.equipe ? 'normal' : 'italic', marginBottom: 6 }}>
-                    {osPrint.equipe || 'Não informado'}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#374151' }}>
-                    <span style={{ color: '#9ca3af', fontSize: 11 }}>Motorista: </span>
-                    <span style={{ color: osPrint.motorista ? '#111' : '#9ca3af', fontStyle: osPrint.motorista ? 'normal' : 'italic' }}>
-                      {osPrint.motorista || 'Não informado'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Materiais locados */}
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px', marginBottom: 10 }}>MATERIAIS / ITENS LOCADOS</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: '#f3f4f6' }}>
-                      <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600, color: '#374151', borderRadius: '8px 0 0 8px', fontSize: 11 }}>DESCRIÇÃO</th>
-                      <th style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>QTD</th>
-                      <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>VALOR UNIT.</th>
-                      <th style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600, color: '#374151', fontSize: 11 }}>PERÍODO</th>
-                      <th style={{ textAlign: 'right', padding: '8px 12px', fontWeight: 600, color: '#374151', borderRadius: '0 8px 8px 0', fontSize: 11 }}>TOTAL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {osPrint.itens.map((item, i) => (
-                      <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                        <td style={{ padding: '10px 12px', color: '#111', fontWeight: 500 }}>{item.descricao}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center', color: '#374151' }}>{item.quantidade}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#374151' }}>{fmtMoeda(item.valorUnitario)}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center', color: '#6b7280' }}>{item.periodo || '—'}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#111' }}>{fmtMoeda(item.quantidade * item.valorUnitario)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Observações operacionais */}
-              {osPrint.observacoesOperacionais && (
-                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '14px 16px', marginBottom: 20, border: '1px solid #fde68a' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#92400e', letterSpacing: '1px', marginBottom: 6 }}>⚠️ OBSERVAÇÕES OPERACIONAIS</div>
-                  <div style={{ fontSize: 13, color: '#78350f', lineHeight: 1.6 }}>{osPrint.observacoesOperacionais}</div>
-                </div>
-              )}
-
-              {/* Assinaturas */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginTop: 32 }}>
-                {['Responsável Operacional', 'Motorista', 'Cliente / Responsável'].map(label => (
-                  <div key={label} style={{ textAlign: 'center' }}>
-                    <div style={{ borderTop: '1px solid #d1d5db', paddingTop: 8, marginTop: 32 }}>
-                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Rodapé */}
-              <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
-                <span>OpSuite — Plataforma Operacional</span>
-                <span>{osPrint.numero} · {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Modal de impressão / visualização da OS — renderizado via portal para print correto */}
+      {osPrint && ReactDOM.createPortal(
+        <OsPrintModal osPrint={osPrint} onClose={() => setPrintId(null)} statusMap={statusMap} />,
+        document.body
       )}
 
       {/* Confirm delete */}

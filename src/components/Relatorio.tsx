@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Orcamento, Venda, OrdemServico, SituacaoVenda, OSStatus, OrcamentoStatus } from '../types';
 import { fmtMoeda } from './ui';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
@@ -35,17 +36,21 @@ const statusOSLabel: Record<OSStatus, string> = {
 
 function MetricCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px', flex: 1, minWidth: 120 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.8px', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 20, color: color || '#111' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 3 }}>{sub}</div>}
+    <div style={{ background: '#f3f4f6', borderRadius: 8, padding: '12px 14px', flex: '1 1 130px', minWidth: 0 }}>
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.8px', marginBottom: 5, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 19, color: color || '#111', lineHeight: 1.2 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>{sub}</div>}
     </div>
   );
 }
 
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
-    <th style={{ textAlign: right ? 'right' : 'left', padding: '8px 12px', fontSize: 10.5, fontWeight: 600, color: '#6b7280', letterSpacing: '0.5px', background: '#f3f4f6', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>
+    <th style={{
+      textAlign: right ? 'right' : 'left', padding: '8px 12px', fontSize: 10.5,
+      fontWeight: 600, color: '#374151', letterSpacing: '0.4px',
+      background: '#f3f4f6', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap',
+    }}>
       {children}
     </th>
   );
@@ -53,7 +58,11 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 
 function Td({ children, right, muted, bold }: { children: React.ReactNode; right?: boolean; muted?: boolean; bold?: boolean }) {
   return (
-    <td style={{ textAlign: right ? 'right' : 'left', padding: '9px 12px', fontSize: 12.5, color: muted ? '#9ca3af' : '#111', fontWeight: bold ? 600 : 400, borderBottom: '1px solid #f3f4f6' }}>
+    <td style={{
+      textAlign: right ? 'right' : 'left', padding: '9px 12px', fontSize: 12.5,
+      color: muted ? '#9ca3af' : '#111', fontWeight: bold ? 600 : 400,
+      borderBottom: '1px solid #f3f4f6', verticalAlign: 'middle',
+    }}>
       {children}
     </td>
   );
@@ -61,6 +70,12 @@ function Td({ children, right, muted, bold }: { children: React.ReactNode; right
 
 export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens = [], onFechar }: Props) {
   const [mes, setMes] = useState(startOfMonth(new Date()));
+
+  // Adiciona/remove classe no body para o CSS de print isolar o relatório
+  useEffect(() => {
+    document.body.classList.add('imprimindo');
+    return () => document.body.classList.remove('imprimindo');
+  }, []);
 
   const ini = startOfMonth(mes);
   const fim = endOfMonth(mes);
@@ -90,18 +105,20 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
     const taxa = orcsPeriodo.length ? Math.round(aprovados.length / orcsPeriodo.length * 100) : 0;
     return (
       <>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
-          <MetricCard label="TOTAL EMITIDOS" value={String(orcsPeriodo.length)} sub={fmtMoeda(orcsPeriodo.reduce((s, o) => s + o.total, 0))} color="#1d4ed8" />
-          <MetricCard label="APROVADOS" value={String(aprovados.length)} sub={fmtMoeda(aprovados.reduce((s, o) => s + o.total, 0))} color="#059669" />
-          <MetricCard label="PREVISTOS" value={String(previstos.length)} sub={fmtMoeda(previstos.reduce((s, o) => s + o.total, 0))} color="#d97706" />
-          <MetricCard label="RECUSADOS" value={String(recusados.length)} sub={fmtMoeda(recusados.reduce((s, o) => s + o.total, 0))} color="#dc2626" />
-          <MetricCard label="TAXA DE CONVERSÃO" value={`${taxa}%`} sub={`${aprovados.length} de ${orcsPeriodo.length}`} color="#6d28d9" />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+          <MetricCard label="Total emitidos" value={String(orcsPeriodo.length)} sub={fmtMoeda(orcsPeriodo.reduce((s, o) => s + o.total, 0))} color="#1d4ed8" />
+          <MetricCard label="Aprovados" value={String(aprovados.length)} sub={fmtMoeda(aprovados.reduce((s, o) => s + o.total, 0))} color="#059669" />
+          <MetricCard label="Previstos" value={String(previstos.length)} sub={fmtMoeda(previstos.reduce((s, o) => s + o.total, 0))} color="#d97706" />
+          <MetricCard label="Recusados" value={String(recusados.length)} sub={fmtMoeda(recusados.reduce((s, o) => s + o.total, 0))} color="#dc2626" />
+          <MetricCard label="Taxa de conversão" value={`${taxa}%`} sub={`${aprovados.length} de ${orcsPeriodo.length}`} color="#6d28d9" />
         </div>
         {orcsPeriodo.length === 0 ? (
           <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Nenhum orçamento neste período.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr><Th>NÚMERO</Th><Th>CLIENTE</Th><Th>CONTATO</Th><Th>STATUS</Th><Th right>VALOR</Th><Th>DATA</Th></tr></thead>
+            <thead>
+              <tr><Th>NÚMERO</Th><Th>CLIENTE</Th><Th>CONTATO</Th><Th>STATUS</Th><Th right>VALOR</Th><Th>DATA</Th></tr>
+            </thead>
             <tbody>
               {orcsPeriodo.map(o => (
                 <tr key={o.id}>
@@ -113,12 +130,14 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
                   <Td muted>{format(new Date(o.criadoEm + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}</Td>
                 </tr>
               ))}
-              <tr style={{ borderTop: '2px solid #e5e7eb' }}>
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2px solid #e5e7eb', background: '#f9fafb' }}>
                 <td colSpan={4} style={{ padding: '10px 12px', fontSize: 12.5, fontWeight: 700, color: '#374151' }}>TOTAL</td>
                 <Td right bold>{fmtMoeda(orcsPeriodo.reduce((s, o) => s + o.total, 0))}</Td>
                 <td />
               </tr>
-            </tbody>
+            </tfoot>
           </table>
         )}
       </>
@@ -126,25 +145,28 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
   };
 
   const renderVendas = () => {
-    const quitadas = vendasPeriodo.filter(v => v.situacao === 'quitado');
+    const quitadas  = vendasPeriodo.filter(v => v.situacao === 'quitado');
     const pendentes = vendasPeriodo.filter(v => v.situacao === 'pendente' || v.situacao === 'parcial');
     const canceladas = vendasPeriodo.filter(v => v.situacao === 'cancelado');
     const totalRecebido = vendasPeriodo.reduce((s, v) => s + v.pagamentos.filter(p => p.pago).reduce((a, p) => a + p.valor, 0), 0);
     const totalGeral = vendasPeriodo.reduce((s, v) => s + v.total, 0);
+    const pctRecebido = totalGeral > 0 ? Math.round(totalRecebido / totalGeral * 100) : 0;
     return (
       <>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
-          <MetricCard label="TOTAL VENDAS" value={String(vendasPeriodo.length)} sub={fmtMoeda(totalGeral)} color="#1d4ed8" />
-          <MetricCard label="RECEBIDO" value={fmtMoeda(totalRecebido)} sub={`${totalGeral > 0 ? Math.round(totalRecebido / totalGeral * 100) : 0}% do total`} color="#059669" />
-          <MetricCard label="A RECEBER" value={fmtMoeda(totalGeral - totalRecebido)} sub={`${pendentes.length} venda(s)`} color="#d97706" />
-          <MetricCard label="QUITADAS" value={String(quitadas.length)} color="#059669" />
-          <MetricCard label="CANCELADAS" value={String(canceladas.length)} color="#dc2626" />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+          <MetricCard label="Total vendas" value={String(vendasPeriodo.length)} sub={fmtMoeda(totalGeral)} color="#1d4ed8" />
+          <MetricCard label="Recebido" value={fmtMoeda(totalRecebido)} sub={`${pctRecebido}% do total`} color="#059669" />
+          <MetricCard label="A receber" value={fmtMoeda(totalGeral - totalRecebido)} sub={`${pendentes.length} venda(s)`} color="#d97706" />
+          <MetricCard label="Quitadas" value={String(quitadas.length)} color="#059669" />
+          <MetricCard label="Canceladas" value={String(canceladas.length)} color="#dc2626" />
         </div>
         {vendasPeriodo.length === 0 ? (
           <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Nenhuma venda neste período.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr><Th>NÚMERO</Th><Th>CLIENTE</Th><Th>ORÇAMENTO</Th><Th>SITUAÇÃO</Th><Th right>VALOR</Th><Th right>RECEBIDO</Th><Th>DATA</Th></tr></thead>
+            <thead>
+              <tr><Th>NÚMERO</Th><Th>CLIENTE</Th><Th>ORÇAMENTO</Th><Th>SITUAÇÃO</Th><Th right>VALOR</Th><Th right>RECEBIDO</Th><Th>DATA</Th></tr>
+            </thead>
             <tbody>
               {vendasPeriodo.map(v => {
                 const recebido = v.pagamentos.filter(p => p.pago).reduce((s, p) => s + p.valor, 0);
@@ -160,13 +182,15 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
                   </tr>
                 );
               })}
-              <tr style={{ borderTop: '2px solid #e5e7eb' }}>
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2px solid #e5e7eb', background: '#f9fafb' }}>
                 <td colSpan={4} style={{ padding: '10px 12px', fontSize: 12.5, fontWeight: 700, color: '#374151' }}>TOTAL</td>
                 <Td right bold>{fmtMoeda(totalGeral)}</Td>
                 <Td right bold>{fmtMoeda(totalRecebido)}</Td>
                 <td />
               </tr>
-            </tbody>
+            </tfoot>
           </table>
         )}
       </>
@@ -174,24 +198,26 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
   };
 
   const renderOrdens = () => {
-    const pendentes   = ordensPeriodo.filter(o => o.status === 'pendente');
-    const andamento   = ordensPeriodo.filter(o => o.status === 'em_andamento');
-    const concluidas  = ordensPeriodo.filter(o => o.status === 'concluida');
-    const canceladas  = ordensPeriodo.filter(o => o.status === 'cancelada');
+    const pendentes  = ordensPeriodo.filter(o => o.status === 'pendente');
+    const andamento  = ordensPeriodo.filter(o => o.status === 'em_andamento');
+    const concluidas = ordensPeriodo.filter(o => o.status === 'concluida');
+    const canceladas = ordensPeriodo.filter(o => o.status === 'cancelada');
     return (
       <>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
-          <MetricCard label="TOTAL OS" value={String(ordensPeriodo.length)} color="#1d4ed8" />
-          <MetricCard label="PENDENTES" value={String(pendentes.length)} color="#d97706" />
-          <MetricCard label="EM ANDAMENTO" value={String(andamento.length)} color="#2563eb" />
-          <MetricCard label="CONCLUÍDAS" value={String(concluidas.length)} color="#059669" />
-          <MetricCard label="CANCELADAS" value={String(canceladas.length)} color="#dc2626" />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+          <MetricCard label="Total OS" value={String(ordensPeriodo.length)} color="#1d4ed8" />
+          <MetricCard label="Pendentes" value={String(pendentes.length)} color="#d97706" />
+          <MetricCard label="Em andamento" value={String(andamento.length)} color="#2563eb" />
+          <MetricCard label="Concluídas" value={String(concluidas.length)} color="#059669" />
+          <MetricCard label="Canceladas" value={String(canceladas.length)} color="#dc2626" />
         </div>
         {ordensPeriodo.length === 0 ? (
           <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Nenhuma OS neste período.</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr><Th>NÚMERO OS</Th><Th>CLIENTE</Th><Th>VENDA</Th><Th>STATUS</Th><Th>MONTAGEM</Th><Th>RETIRADA</Th><Th>EQUIPE</Th></tr></thead>
+            <thead>
+              <tr><Th>NÚMERO OS</Th><Th>CLIENTE</Th><Th>VENDA</Th><Th>STATUS</Th><Th>MONTAGEM</Th><Th>RETIRADA</Th><Th>EQUIPE</Th></tr>
+            </thead>
             <tbody>
               {ordensPeriodo.map(o => (
                 <tr key={o.id}>
@@ -211,56 +237,62 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
     );
   };
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onFechar(); }}>
-      <div style={{ background: '#fff', color: '#111', borderRadius: 16, width: '100%', maxWidth: 860, maxHeight: '95vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif" }}>
-
-        {/* Barra de ações (não imprime) */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', borderRadius: '16px 16px 0 0' }} className="no-print">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+  const content = (
+    <div
+      className="relatorio-impressao"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onFechar(); }}
+    >
+      <div
+        className="relatorio-caixa"
+        style={{ background: '#fff', color: '#111', borderRadius: 16, width: '100%', maxWidth: 860, maxHeight: '95vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif" }}
+      >
+        {/* Barra de controle — não imprime */}
+        <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', borderRadius: '16px 16px 0 0', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 600, fontSize: 14, color: '#111' }}>📊 {tituloTipo[tipo]}</span>
-            {/* Seletor de período */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '4px 8px' }}>
               <button onClick={() => setMes(m => subMonths(m, 1))}
-                style={{ width: 24, height: 24, border: 'none', background: 'none', cursor: 'pointer', color: '#374151', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}>←</button>
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#374151', minWidth: 150, textAlign: 'center' }}>{periodoLabel}</span>
+                style={{ width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', color: '#374151', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}>←</button>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', minWidth: 160, textAlign: 'center' }}>{periodoLabel}</span>
               <button onClick={() => setMes(m => addMonths(m, 1))}
-                style={{ width: 24, height: 24, border: 'none', background: 'none', cursor: 'pointer', color: '#374151', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}>→</button>
+                style={{ width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', color: '#374151', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}>→</button>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => window.print()}
-              style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+              style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
               🖨️ Imprimir / PDF
             </button>
             <button onClick={onFechar}
-              style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13 }}>Fechar</button>
+              style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif" }}>
+              Fechar
+            </button>
           </div>
         </div>
 
         {/* Conteúdo imprimível */}
         <div style={{ padding: '28px 36px' }}>
           {/* Cabeçalho */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
             <div>
               <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: '-0.4px', color: '#111' }}>{tituloTipo[tipo]}</div>
-              <div style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>Período: {periodoLabel}</div>
+              <div style={{ fontSize: 13.5, color: '#6b7280', marginTop: 3 }}>Período: {periodoLabel}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 16, color: '#1d4ed8' }}>OpSuite</div>
-              <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 2 }}>Emitido em {emissaoLabel}</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#1d4ed8' }}>OpSuite</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Emitido em {emissaoLabel}</div>
             </div>
           </div>
 
-          <div style={{ height: 2, background: '#e5e7eb', marginBottom: 24, borderRadius: 2 }} />
+          <div style={{ height: 2, background: '#e5e7eb', marginBottom: 22, borderRadius: 2 }} />
 
           {tipo === 'orcamentos' && renderOrcamentos()}
-          {tipo === 'vendas' && renderVendas()}
-          {tipo === 'ordens' && renderOrdens()}
+          {tipo === 'vendas'     && renderVendas()}
+          {tipo === 'ordens'     && renderOrdens()}
 
           {/* Rodapé */}
-          <div style={{ marginTop: 28, paddingTop: 16, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
+          <div style={{ marginTop: 28, paddingTop: 14, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
             <span>OpSuite — Plataforma Operacional</span>
             <span>{tituloTipo[tipo]} · {periodoLabel}</span>
           </div>
@@ -268,4 +300,6 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(content, document.body);
 }

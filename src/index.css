@@ -41,4 +41,49 @@ input,select,textarea{font-family:'Inter',sans-serif}
 @media print{
   .no-print{display:none!important}
   body{background:#fff}
+
+  /* Esconde o app inteiro quando um relatório ou OS está aberto para impressão */
+  body.imprimindo #root{display:none!important}
+
+  /* Relatório — remove as restrições de modal */
+  .relatorio-impressao{
+    display:block!important;
+    position:static!important;
+    background:transparent!important;
+    padding:0!important;
+  }
+  .relatorio-caixa{
+    max-height:none!important;
+    height:auto!important;
+    overflow:visible!important;
+    box-shadow:none!important;
+    border-radius:0!important;
+    max-width:100%!important;
+    width:100%!important;
+  }
+
+  /* Tabelas — cabeçalho repete em cada página */
+  thead{display:table-header-group}
+  tfoot{display:table-footer-group}
+  tr{page-break-inside:avoid}
+  table{page-break-inside:auto;width:100%!important}
+
+  /* Preserva cores de fundo nas células */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+
+  /* OS print — remove restrições do modal */
+  .os-impressao-overlay{
+    display:block!important;
+    position:static!important;
+    background:transparent!important;
+    padding:0!important;
+  }
+  .os-impressao-caixa{
+    max-height:none!important;
+    overflow:visible!important;
+    box-shadow:none!important;
+    border-radius:0!important;
+    max-width:100%!important;
+    width:100%!important;
+  }
 }
