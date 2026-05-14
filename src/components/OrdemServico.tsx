@@ -3,6 +3,7 @@ import { OrdemServico as OS, OSStatus } from '../types';
 import { fmtMoeda } from './ui';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import Relatorio from './Relatorio';
 
 interface Props {
   ordens: OS[];
@@ -49,6 +50,7 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<OS>>({});
+  const [showRelatorio, setShowRelatorio] = useState(false);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -113,6 +115,10 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
             style={{ border: 'none', outline: 'none', fontSize: 13, fontFamily: "'Inter',sans-serif", color: 'var(--text)', background: 'transparent', width: '100%' }} />
           {busca && <button onClick={() => setBusca('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 16, padding: 0 }}>×</button>}
         </div>
+        <button onClick={() => setShowRelatorio(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", color: 'var(--text)', whiteSpace: 'nowrap' }}>
+          📊 Relatório
+        </button>
       </div>
 
       {/* Cards — contagens baseadas na lista com filtro de venda aplicado */}
@@ -493,6 +499,10 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
             </div>
           </div>
         </div>
+      )}
+
+      {showRelatorio && (
+        <Relatorio tipo="ordens" ordens={ordens} onFechar={() => setShowRelatorio(false)} />
       )}
     </div>
   );

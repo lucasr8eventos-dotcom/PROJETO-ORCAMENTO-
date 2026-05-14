@@ -4,6 +4,7 @@ import { StatusBadge, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import Relatorio from './Relatorio';
 
 interface Props {
   orcamentos: Orcamento[];
@@ -27,6 +28,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showRelatorio, setShowRelatorio] = useState(false);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -96,6 +98,10 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         </div>
 
         <div style={{ marginLeft:'auto',display:'flex',gap:8 }}>
+          <button onClick={() => setShowRelatorio(true)}
+            style={{ display:'flex',alignItems:'center',gap:6,padding:'9px 16px',borderRadius:10,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'Inter',sans-serif",color:'var(--text)' }}>
+            📊 Relatório
+          </button>
           <button onClick={onNovo}
             style={{ display:'flex',alignItems:'center',gap:7,padding:'9px 16px',borderRadius:10,background:'var(--text)',color:'#fff',border:'none',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap' }}>
             + Novo orçamento
@@ -250,6 +256,10 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
             </button>
           </div>
         </>
+      )}
+
+      {showRelatorio && (
+        <Relatorio tipo="orcamentos" orcamentos={orcamentos} onFechar={() => setShowRelatorio(false)} />
       )}
     </div>
   );

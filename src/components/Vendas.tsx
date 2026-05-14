@@ -5,6 +5,7 @@ import { calcularSituacaoVenda } from '../data';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { v4 as uuid } from 'uuid';
+import Relatorio from './Relatorio';
 
 interface Props {
   vendas: Venda[];
@@ -43,6 +44,7 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [editVendaId, setEditVendaId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ contato: string; observacoes: string }>({ contato: '', observacoes: '' });
+  const [showRelatorio, setShowRelatorio] = useState(false);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -122,6 +124,10 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
             style={{ border: 'none', outline: 'none', fontSize: 13, fontFamily: "'Inter',sans-serif", color: 'var(--text)', background: 'transparent', width: '100%' }} />
           {busca && <button onClick={() => setBusca('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 16, padding: 0 }}>×</button>}
         </div>
+        <button onClick={() => setShowRelatorio(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", color: 'var(--text)', whiteSpace: 'nowrap' }}>
+          📊 Relatório
+        </button>
       </div>
 
       {/* Cards */}
@@ -432,6 +438,10 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
             </div>
           </div>
         </div>
+      )}
+
+      {showRelatorio && (
+        <Relatorio tipo="vendas" vendas={vendas} onFechar={() => setShowRelatorio(false)} />
       )}
     </div>
   );
