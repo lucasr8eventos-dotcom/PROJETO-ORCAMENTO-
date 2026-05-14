@@ -96,7 +96,7 @@ function newLine(): LineItem {
 }
 
 const emptyCliente = (): Cliente => ({
-  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
+  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', cpf: '', endereco: '',
   criadoEm: format(new Date(), 'yyyy-MM-dd'),
 });
 
@@ -320,7 +320,8 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <FormField label="Nome *"><Input value={novoClienteForm.nome} onChange={e=>setNovoClienteForm({...novoClienteForm,nome:e.target.value})} placeholder="Nome completo ou razão social" /></FormField>
           <FormField label="E-mail"><Input type="email" value={novoClienteForm.email} onChange={e=>setNovoClienteForm({...novoClienteForm,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
           <FormField label="Telefone"><Input value={novoClienteForm.telefone} onChange={e=>setNovoClienteForm({...novoClienteForm,telefone:e.target.value})} placeholder="(11) 99999-9999" /></FormField>
-          <FormField label="CNPJ / CPF"><Input value={novoClienteForm.cnpj} onChange={e=>setNovoClienteForm({...novoClienteForm,cnpj:e.target.value})} placeholder="00.000.000/0001-00" /></FormField>
+          <FormField label="CNPJ"><Input value={novoClienteForm.cnpj} onChange={e=>setNovoClienteForm({...novoClienteForm,cnpj:e.target.value})} placeholder="00.000.000/0001-00" /></FormField>
+          <FormField label="CPF"><Input value={novoClienteForm.cpf} onChange={e=>setNovoClienteForm({...novoClienteForm,cpf:e.target.value})} placeholder="000.000.000-00" /></FormField>
         </div>
         <FormField label="Endereço" style={{ marginBottom:20 }}><Input value={novoClienteForm.endereco} onChange={e=>setNovoClienteForm({...novoClienteForm,endereco:e.target.value})} placeholder="Rua, número, cidade/estado" /></FormField>
         <div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}>

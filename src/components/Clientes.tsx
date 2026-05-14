@@ -11,7 +11,7 @@ interface Props {
 }
 
 const empty = (): Cliente => ({
-  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
+  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', cpf: '', endereco: '',
   criadoEm: format(new Date(), 'yyyy-MM-dd'),
 });
 
@@ -77,6 +77,7 @@ export default function Clientes({ clientes, onSalvar, onDelete }: Props) {
           <FormField label="E-mail"><Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
           <FormField label="Telefone"><Input value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})} placeholder="(11) 99999-9999" /></FormField>
           <FormField label="CNPJ"><Input value={form.cnpj} onChange={e=>setForm({...form,cnpj:e.target.value})} placeholder="00.000.000/0001-00" /></FormField>
+          <FormField label="CPF"><Input value={form.cpf||''} onChange={e=>setForm({...form,cpf:e.target.value})} placeholder="000.000.000-00" /></FormField>
         </div>
         <FormField label="Endereço" style={{ marginBottom:14 }}><Input value={form.endereco} onChange={e=>setForm({...form,endereco:e.target.value})} placeholder="Rua, número, cidade/estado" /></FormField>
         <div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}>
