@@ -6,11 +6,11 @@ const hoje = new Date();
 const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
 
 export const clientesIniciais: Cliente[] = [
-  { id: 'c1', nome: 'Eventos Prime Ltda', email: 'contato@eventosprime.com.br', telefone: '(11) 99234-5678', empresa: 'Eventos Prime Ltda', cnpj: '12.345.678/0001-90', endereco: 'Av. Paulista, 1000 - São Paulo/SP', criadoEm: '2026-01-10' },
-  { id: 'c2', nome: 'Construtora Vega S/A', email: 'orcamentos@vega.com.br', telefone: '(11) 3456-7890', empresa: 'Construtora Vega S/A', cnpj: '98.765.432/0001-11', endereco: 'Rua Augusta, 500 - São Paulo/SP', criadoEm: '2026-02-03' },
-  { id: 'c3', nome: 'Clínica Saúde Total', email: 'admin@saudetotal.com.br', telefone: '(11) 98765-4321', empresa: 'Clínica Saúde Total', cnpj: '55.444.333/0001-22', endereco: 'Rua Oscar Freire, 200 - São Paulo/SP', criadoEm: '2026-02-20' },
-  { id: 'c4', nome: 'Studio Creative Co.', email: 'studio@creativeco.com.br', telefone: '(11) 97654-3210', empresa: 'Studio Creative Co.', cnpj: '77.888.999/0001-33', endereco: 'Vila Madalena, 80 - São Paulo/SP', criadoEm: '2026-03-05' },
-  { id: 'c5', nome: 'Farmácias Bem Estar', email: 'compras@bemestar.com.br', telefone: '(11) 3210-9876', empresa: 'Farmácias Bem Estar', cnpj: '11.222.333/0001-44', endereco: 'Av. Brigadeiro Faria Lima, 300 - São Paulo/SP', criadoEm: '2026-03-15' },
+  { id: 'c1', nome: 'Eventos Prime Ltda', email: 'contato@eventosprime.com.br', telefone: '(11) 99234-5678', empresa: 'Eventos Prime Ltda', cnpj: '12.345.678/0001-90', cpf: '', endereco: 'Av. Paulista, 1000 - São Paulo/SP', criadoEm: '2026-01-10' },
+  { id: 'c2', nome: 'Construtora Vega S/A', email: 'orcamentos@vega.com.br', telefone: '(11) 3456-7890', empresa: 'Construtora Vega S/A', cnpj: '98.765.432/0001-11', cpf: '', endereco: 'Rua Augusta, 500 - São Paulo/SP', criadoEm: '2026-02-03' },
+  { id: 'c3', nome: 'Clínica Saúde Total', email: 'admin@saudetotal.com.br', telefone: '(11) 98765-4321', empresa: 'Clínica Saúde Total', cnpj: '55.444.333/0001-22', cpf: '', endereco: 'Rua Oscar Freire, 200 - São Paulo/SP', criadoEm: '2026-02-20' },
+  { id: 'c4', nome: 'Studio Creative Co.', email: 'studio@creativeco.com.br', telefone: '(11) 97654-3210', empresa: 'Studio Creative Co.', cnpj: '77.888.999/0001-33', cpf: '', endereco: 'Vila Madalena, 80 - São Paulo/SP', criadoEm: '2026-03-05' },
+  { id: 'c5', nome: 'Farmácias Bem Estar', email: 'compras@bemestar.com.br', telefone: '(11) 3210-9876', empresa: 'Farmácias Bem Estar', cnpj: '11.222.333/0001-44', cpf: '', endereco: 'Av. Brigadeiro Faria Lima, 300 - São Paulo/SP', criadoEm: '2026-03-15' },
 ];
 
 export const produtosIniciais: Produto[] = [

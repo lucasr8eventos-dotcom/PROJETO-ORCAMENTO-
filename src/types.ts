@@ -42,6 +42,7 @@ export interface Cliente {
   telefone: string;
   empresa: string;
   cnpj: string;
+  cpf: string;
   endereco: string;
   criadoEm: string;
 }
