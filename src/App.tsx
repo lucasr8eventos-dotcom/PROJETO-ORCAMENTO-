@@ -6,7 +6,7 @@ import {
   loadData, saveData, calcularTotais,
   clientesIniciais, produtosIniciais, orcamentosIniciais, eventosIniciais, usuariosIniciais,
   vendasIniciais, ordensServicoIniciais,
-  proximoNumeroVenda, proximoNumeroOS, calcularSituacaoVenda,
+  proximoNumeroVenda, proximoNumeroOS,
 } from './data';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -45,8 +45,6 @@ function NavItem({ label, icon, active, onClick, badge, dot }: any) {
   );
 }
 
-interface Toast { id: string; msg: string; tipo: 'sucesso' | 'info' }
-
 export default function App() {
   const [user, setUser] = useState<Usuario | null>(null);
   const [section, setSection] = useState<Section>('dashboard');
@@ -55,7 +53,7 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [busca, setBusca] = useState('');
   const [filtroOsVendaId, setFiltroOsVendaId] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<{ id: string; msg: string }[]>([]);
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() =>
     loadData('opsuite_orc', orcamentosIniciais).map(o => ({ ...o, ...calcularTotais(o) }))
@@ -79,9 +77,9 @@ export default function App() {
     window.addEventListener('resize', h); return () => window.removeEventListener('resize', h);
   }, []);
 
-  const addToast = (msg: string, tipo: 'sucesso' | 'info' = 'sucesso') => {
+  const addToast = (msg: string) => {
     const id = crypto.randomUUID();
-    setToasts(t => [...t, { id, msg, tipo }]);
+    setToasts(t => [...t, { id, msg }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4000);
   };
 

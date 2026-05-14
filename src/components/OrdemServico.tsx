@@ -113,21 +113,26 @@ export default function OrdemServico({ ordens, onSalvar, onDelete, filtroVendaId
         </div>
       </div>
 
-      {/* Cards */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <button style={cardStyle('todos')} onClick={() => setFiltroStatus('todos')}>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>Total ({ordens.length})</div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, color: 'var(--text)' }}>Todas as OS</div>
-        </button>
-        {(['pendente', 'em_andamento', 'concluida'] as OSStatus[]).map(s => (
-          <button key={s} style={cardStyle(s)} onClick={() => setFiltroStatus(filtroStatus === s ? 'todos' : s)}>
-            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>{statusMap[s].label} ({ordens.filter(o => o.status === s).length})</div>
-            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, color: statusMap[s].color }}>
-              {ordens.filter(o => o.status === s).length === 0 ? '—' : ordens.filter(o => o.status === s).length + ' OS'}
-            </div>
-          </button>
-        ))}
-      </div>
+      {/* Cards — contagens baseadas na lista com filtro de venda aplicado */}
+      {(() => {
+        const base = filtroVendaId ? ordens.filter(o => o.vendaId === filtroVendaId) : ordens;
+        return (
+          <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+            <button style={cardStyle('todos')} onClick={() => setFiltroStatus('todos')}>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>Total ({base.length})</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, color: 'var(--text)' }}>Todas as OS</div>
+            </button>
+            {(['pendente', 'em_andamento', 'concluida'] as OSStatus[]).map(s => (
+              <button key={s} style={cardStyle(s)} onClick={() => setFiltroStatus(filtroStatus === s ? 'todos' : s)}>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>{statusMap[s].label} ({base.filter(o => o.status === s).length})</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, color: statusMap[s].color }}>
+                  {base.filter(o => o.status === s).length === 0 ? '—' : base.filter(o => o.status === s).length + ' OS'}
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Tabela */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>

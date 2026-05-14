@@ -47,7 +47,8 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
   };
 
   const filtradas = useMemo(() => vendas.filter(v => {
-    if (filtro !== 'todos' && v.situacao !== filtro) return false;
+    if (filtro === 'pendente' && v.situacao !== 'pendente' && v.situacao !== 'parcial') return false;
+    if (filtro !== 'todos' && filtro !== 'pendente' && v.situacao !== filtro) return false;
     if (busca) {
       const q = busca.toLowerCase();
       return v.clienteNome.toLowerCase().includes(q) || v.numero.toLowerCase().includes(q) || v.orcamentoNumero.toLowerCase().includes(q);
