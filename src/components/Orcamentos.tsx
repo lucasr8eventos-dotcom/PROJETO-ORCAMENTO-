@@ -29,6 +29,13 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
   const [busca, setBusca] = useState('');
   const [mes, setMes] = useState('0');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+
+  const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    setMenuOpen(menuOpen === id ? null : id);
+  };
 
   const filtered = useMemo(() => {
     return orcamentos.filter(o => {
@@ -96,27 +103,8 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
                         <button onClick={()=>gerarPDF(o)} title="Gerar PDF" style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
                         </button>
-                        <div style={{ position:'relative' }}>
-                          <button onClick={()=>setMenuOpen(menuOpen===o.id?null:o.id)} style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)',fontSize:16 }}>⋯</button>
-                          {menuOpen===o.id && (
-                            <div style={{ position:'absolute',right:0,top:34,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:180,boxShadow:'0 4px 16px rgba(0,0,0,0.1)' }}>
-                              {(['enviado','aprovado','aguardando','recusado'] as OrcamentoStatus[]).map(s=>(
-                                <button key={s} onClick={()=>{onStatusChange(o.id,s);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
-                                  onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-                                  onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
-                                >Marcar como {s}</button>
-                              ))}
-                              <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
-                              <button onClick={()=>{onEditar(o);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
-                                onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-                                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
-                              >Editar orçamento</button>
-                              <button onClick={()=>{onDelete(o.id);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--red)' }}
-                                onMouseEnter={e=>(e.currentTarget.style.background='var(--red-bg)')}
-                                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
-                              >Excluir</button>
-                            </div>
-                          )}
+                        <div>
+                          <button onClick={e=>openMenu(o.id, e)} style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)',fontSize:16 }}>⋯</button>
                         </div>
                       </div>
                     </td>
@@ -128,7 +116,28 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
         )}
       </Card>
 
-      {menuOpen && <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />}
+      {menuOpen && (
+        <>
+          <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />
+          <div style={{ position:'fixed',top:menuPos.top,right:menuPos.right,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:190,boxShadow:'0 4px 20px rgba(0,0,0,0.12)' }}>
+            {(['enviado','aprovado','aguardando','recusado'] as OrcamentoStatus[]).map(s=>(
+              <button key={s} onClick={()=>{const o=filtered.find(x=>x.id===menuOpen);if(o)onStatusChange(o.id,s);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
+                onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
+                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+              >Marcar como {s}</button>
+            ))}
+            <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
+            <button onClick={()=>{const o=filtered.find(x=>x.id===menuOpen);if(o)onEditar(o);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
+              onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
+              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+            >Editar orçamento</button>
+            <button onClick={()=>{if(menuOpen)onDelete(menuOpen);setMenuOpen(null);}} style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--red)' }}
+              onMouseEnter={e=>(e.currentTarget.style.background='var(--red-bg)')}
+              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+            >Excluir</button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Orcamento, LineItem, OrcamentoStatus, Cliente, Produto } from '../types';
-import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda } from './ui';
+import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda, Modal } from './ui';
 import { gerarPDF } from '../pdfGenerator';
 import { loadConfig } from './Configuracoes';
 import { format, addDays } from 'date-fns';
@@ -12,9 +12,7 @@ function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v
   const [raw, setRaw] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const display = focused
-    ? raw
-    : value === 0 ? '' : fmtMoeda(value);
+  const display = focused ? raw : value === 0 ? '' : fmtMoeda(value);
 
   const handleFocus = () => {
     const cents = Math.round(value * 100);
@@ -25,14 +23,10 @@ function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '');
     setRaw(digits);
-    const cents = parseInt(digits || '0', 10);
-    onChange(cents / 100);
+    onChange(parseInt(digits || '0', 10) / 100);
   };
 
-  const handleBlur = () => {
-    setFocused(false);
-    setRaw('');
-  };
+  const handleBlur = () => { setFocused(false); setRaw(''); };
 
   return (
     <input
@@ -43,19 +37,57 @@ function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v
       onBlur={handleBlur}
       placeholder="R$ 0,00"
       inputMode="numeric"
-      style={{
-        padding: '7px 10px',
-        border: '1px solid var(--border)',
-        borderRadius: 8,
-        fontSize: 13,
-        fontFamily: "'Inter',sans-serif",
-        outline: 'none',
-        color: 'var(--text)',
-        background: 'var(--surface)',
-        width: '100%',
-        ...style,
-      }}
+      style={{ padding:'7px 10px', border:'1px solid var(--border)', borderRadius:8, fontSize:13, fontFamily:"'Inter',sans-serif", outline:'none', color:'var(--text)', background:'var(--surface)', width:'100%', ...style }}
     />
+  );
+}
+
+function ClienteSearch({ clientes, value, onChange }: { clientes: Cliente[]; value: string; onChange: (id: string) => void }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selected = clientes.find(c => c.id === value);
+  const q = query.toLowerCase();
+  const filtered = q
+    ? clientes.filter(c => c.nome.toLowerCase().includes(q) || c.cnpj.includes(q) || c.email.toLowerCase().includes(q))
+    : clientes;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position:'relative' }}>
+      <input
+        value={open ? query : selected?.nome || ''}
+        onChange={e => setQuery(e.target.value)}
+        onFocus={() => { setQuery(''); setOpen(true); }}
+        placeholder="Buscar por nome, CNPJ..."
+        style={{ padding:'9px 12px', border:'1px solid var(--border)', borderRadius:10, fontSize:13.5, fontFamily:"'Inter',sans-serif", color:'var(--text)', background:'var(--surface)', outline:'none', width:'100%' }}
+      />
+      {open && (
+        <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, zIndex:200, maxHeight:220, overflowY:'auto', boxShadow:'0 4px 16px rgba(0,0,0,0.12)' }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding:12, fontSize:13, color:'var(--text3)', textAlign:'center' }}>Nenhum cliente encontrado</div>
+          ) : filtered.slice(0, 8).map((c, idx) => (
+            <div key={c.id}
+              onMouseDown={() => { onChange(c.id); setOpen(false); setQuery(''); }}
+              style={{ padding:'10px 12px', fontSize:13, cursor:'pointer', borderBottom: idx < Math.min(filtered.length, 8) - 1 ? '1px solid var(--border)' : 'none' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <div style={{ fontWeight:500, color:'var(--text)' }}>{c.nome}</div>
+              {c.cnpj && <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:1 }}>{c.cnpj}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -63,16 +95,22 @@ function newLine(): LineItem {
   return { id: uuid(), descricao: '', quantidade: 1, valorUnitario: 0, periodo: '' };
 }
 
+const emptyCliente = (): Cliente => ({
+  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
+  criadoEm: format(new Date(), 'yyyy-MM-dd'),
+});
+
 interface Props {
   orcamento?: Orcamento | null;
   clientes: Cliente[];
   produtos: Produto[];
   onSalvar: (o: Orcamento) => void;
   onCancelar: () => void;
+  onSalvarCliente: (c: Cliente) => void;
   proximoNumero: string;
 }
 
-export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar, onCancelar, proximoNumero }: Props) {
+export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar, onCancelar, onSalvarCliente, proximoNumero }: Props) {
   const isEdit = !!orcamento;
   const hoje = new Date();
 
@@ -84,6 +122,9 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
   const [impostos, setImpostos] = useState(orcamento?.impostos ?? 0);
   const [observacoes, setObservacoes] = useState(orcamento?.observacoes || '');
   const [validade, setValidade] = useState(orcamento?.validade || format(addDays(hoje, 14), 'yyyy-MM-dd'));
+
+  const [novoClienteModal, setNovoClienteModal] = useState(false);
+  const [novoClienteForm, setNovoClienteForm] = useState<Cliente>(emptyCliente());
 
   const subtotal = itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0);
   const descontoVal = subtotal * desconto / 100;
@@ -127,6 +168,16 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
     onSalvar(orc);
   };
 
+  const salvarNovoCliente = () => {
+    if (!novoClienteForm.nome) { alert('Nome obrigatório'); return; }
+    const novo = { ...novoClienteForm, id: uuid() };
+    onSalvarCliente(novo);
+    setClienteId(novo.id);
+    setContato(novo.nome);
+    setNovoClienteModal(false);
+    setNovoClienteForm(emptyCliente());
+  };
+
   return (
     <div>
       <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:22,flexWrap:'wrap' }}>
@@ -147,10 +198,22 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:16 }}>Dados do cliente</div>
         <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:14 }}>
           <FormField label="Cliente *">
-            <Select value={clienteId} onChange={e => { setClienteId(e.target.value); const c=clientes.find(x=>x.id===e.target.value); if(c)setContato(c.nome); }}>
-              <option value="">Selecionar cliente...</option>
-              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-            </Select>
+            <div style={{ display:'flex',gap:8 }}>
+              <div style={{ flex:1 }}>
+                <ClienteSearch
+                  clientes={clientes}
+                  value={clienteId}
+                  onChange={id => { setClienteId(id); const c = clientes.find(x => x.id === id); if (c) setContato(c.nome); }}
+                />
+              </div>
+              <button
+                onClick={() => { setNovoClienteForm(emptyCliente()); setNovoClienteModal(true); }}
+                title="Cadastrar novo cliente"
+                style={{ flexShrink:0,height:40,padding:'0 12px',borderRadius:10,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',fontSize:13,color:'var(--text2)',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:5 }}
+              >
+                + Novo
+              </button>
+            </div>
           </FormField>
           <FormField label="Contato">
             <Input value={contato} onChange={e=>setContato(e.target.value)} placeholder="Nome do contato" />
@@ -211,15 +274,19 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
         <Card>
-          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Observações</div>
-          <Textarea rows={5} value={observacoes} onChange={e=>setObservacoes(e.target.value)} placeholder="Condições de pagamento, prazo de entrega, notas..." />
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Detalhes do orçamento</div>
+          <Textarea
+            rows={7}
+            value={observacoes}
+            onChange={e=>setObservacoes(e.target.value)}
+            placeholder={"Condições de pagamento, prazo de entrega, notas...\n\nPressione Enter para nova linha."}
+            style={{ resize:'vertical' }}
+          />
         </Card>
 
         <Card style={{ background:'var(--surface2)' }}>
           <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Resumo financeiro</div>
-          {[
-            ['Subtotal', fmtMoeda(subtotal)],
-          ].map(([l,v])=>(
+          {[['Subtotal', fmtMoeda(subtotal)]].map(([l,v])=>(
             <div key={l} style={{ display:'flex',justifyContent:'space-between',marginBottom:10,fontSize:13.5,color:'var(--text2)' }}>
               <span>{l}</span><span style={{color:'var(--text)',fontWeight:500}}>{v}</span>
             </div>
@@ -247,6 +314,20 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <Btn variant="primary" onClick={()=>handleSalvar()} style={{width:'100%',justifyContent:'center',marginTop:14}}>Salvar orçamento</Btn>
         </Card>
       </div>
+
+      <Modal open={novoClienteModal} onClose={()=>setNovoClienteModal(false)} title="Cadastrar novo cliente">
+        <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
+          <FormField label="Nome *"><Input value={novoClienteForm.nome} onChange={e=>setNovoClienteForm({...novoClienteForm,nome:e.target.value})} placeholder="Nome completo ou razão social" /></FormField>
+          <FormField label="E-mail"><Input type="email" value={novoClienteForm.email} onChange={e=>setNovoClienteForm({...novoClienteForm,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
+          <FormField label="Telefone"><Input value={novoClienteForm.telefone} onChange={e=>setNovoClienteForm({...novoClienteForm,telefone:e.target.value})} placeholder="(11) 99999-9999" /></FormField>
+          <FormField label="CNPJ / CPF"><Input value={novoClienteForm.cnpj} onChange={e=>setNovoClienteForm({...novoClienteForm,cnpj:e.target.value})} placeholder="00.000.000/0001-00" /></FormField>
+        </div>
+        <FormField label="Endereço" style={{ marginBottom:20 }}><Input value={novoClienteForm.endereco} onChange={e=>setNovoClienteForm({...novoClienteForm,endereco:e.target.value})} placeholder="Rua, número, cidade/estado" /></FormField>
+        <div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}>
+          <Btn onClick={()=>setNovoClienteModal(false)}>Cancelar</Btn>
+          <Btn variant="primary" onClick={salvarNovoCliente}>Criar e selecionar</Btn>
+        </div>
+      </Modal>
     </div>
   );
 }
