@@ -39,6 +39,8 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [editVendaId, setEditVendaId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ contato: string; observacoes: string }>({ contato: '', observacoes: '' });
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -197,6 +199,16 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               💰 Gerenciar pagamentos
+            </button>
+            <button onClick={() => {
+              const v = vendas.find(x => x.id === menuOpen);
+              if (v) { setEditForm({ contato: v.contato, observacoes: v.observacoes }); setEditVendaId(menuOpen); }
+              setMenuOpen(null);
+            }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+              ✏️ Editar venda
             </button>
             <button onClick={() => { onVerOS(menuOpen); setMenuOpen(null); }}
               style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
@@ -357,6 +369,49 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
           </div>
         </div>
       )}
+
+      {/* Modal de edição da venda */}
+      {editVendaId && (() => {
+        const v = vendas.find(x => x.id === editVendaId);
+        if (!v) return null;
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={e => { if (e.target === e.currentTarget) setEditVendaId(null); }}>
+            <div style={{ background: 'var(--surface)', borderRadius: 16, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+              <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17 }}>Editar venda</div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{v.numero} · {v.clienteNome}</div>
+                </div>
+                <button onClick={() => setEditVendaId(null)}
+                  style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+              </div>
+              <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.06)', borderRadius: 9, border: '1px solid rgba(59,130,246,0.15)', fontSize: 12.5, color: 'var(--blue)' }}>
+                  ℹ️ Itens e valores refletem o orçamento aprovado e não podem ser alterados.
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.4px' }}>CONTATO</div>
+                  <input value={editForm.contato} onChange={e => setEditForm(f => ({ ...f, contato: e.target.value }))}
+                    placeholder="Nome do contato" style={inp} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.4px' }}>OBSERVAÇÕES</div>
+                  <textarea value={editForm.observacoes} onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))}
+                    placeholder="Condições, anotações internas..." rows={4}
+                    style={{ ...inp, resize: 'vertical' as const, lineHeight: 1.6 }} />
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+                  <button onClick={() => setEditVendaId(null)}
+                    style={{ padding: '9px 20px', borderRadius: 9, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--text2)' }}>Cancelar</button>
+                  <button onClick={() => { onSalvar({ ...v, contato: editForm.contato, observacoes: editForm.observacoes }); setEditVendaId(null); }}
+                    style={{ padding: '9px 20px', borderRadius: 9, border: 'none', background: 'var(--text)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Salvar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Confirm delete */}
       {confirmDelete && (
