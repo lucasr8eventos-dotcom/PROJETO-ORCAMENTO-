@@ -153,11 +153,6 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
     if (itens.length > 1) setItens(prev => prev.filter(i => i.id !== id));
   };
 
-  const addItemFromProduto = (prodId: string) => {
-    const p = produtos.find(x => x.id === prodId);
-    if (!p) return;
-    setItens(prev => [...prev, { id: uuid(), descricao: p.nome, quantidade: 1, valorUnitario: p.preco, periodo: '' }]);
-  };
 
   const handleSalvar = (novoStatus?: OrcamentoStatus) => {
     if (!clienteId) { alert('Selecione um cliente.'); return; }
