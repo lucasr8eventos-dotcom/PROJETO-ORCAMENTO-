@@ -29,10 +29,12 @@ const orcamentos: Orcamento[] = [
 ];
 
 const clientes: Cliente[] = [];
+const vendas: any[] = [];
 
 const defaultProps = {
   orcamentos,
   clientes,
+  vendas,
   onNovo: jest.fn(),
   onEditar: jest.fn(),
   onDelete: jest.fn(),
@@ -92,12 +94,15 @@ describe('Orcamentos', () => {
     expect(screen.queryByText('Empresa Alpha')).not.toBeInTheDocument();
   });
 
-  it('abre menu de ações e chama onDelete', () => {
+  it('abre menu de ações e chama onDelete após confirmação', () => {
     const onDelete = jest.fn();
     render(<Orcamentos {...defaultProps} onDelete={onDelete} />);
     const botoes = screen.getAllByRole('button', { name: /Ações/ });
     fireEvent.click(botoes[0]);
     fireEvent.click(screen.getByText('🗑️ Excluir'));
+    // PR #6 adicionou modal de confirmação
+    expect(screen.getByText('Excluir orçamento?')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
     expect(onDelete).toHaveBeenCalledWith('o1');
   });
 
