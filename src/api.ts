@@ -1,6 +1,8 @@
+import cfg from './config';
+
 const API_BASE = process.env.REACT_APP_API_URL || 'https://heartfelt-hope-production-9a25.up.railway.app';
 
-function token() { return localStorage.getItem('opsuite_token') || ''; }
+function token() { return localStorage.getItem(cfg.tokenKey) || ''; }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
