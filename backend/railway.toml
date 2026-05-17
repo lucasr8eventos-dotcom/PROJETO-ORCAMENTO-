@@ -1,7 +1,7 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npm run build && npx prisma generate && npx prisma migrate deploy && npx tsx prisma/seed.ts"
+buildCommand = "npm install && npm run build && npx prisma generate"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "npx prisma migrate deploy && npx tsx prisma/seed.ts && npm start"
 restartPolicyType = "on_failure"
