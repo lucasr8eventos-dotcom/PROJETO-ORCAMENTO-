@@ -1,15 +1,16 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { validar, orcamentoSchema, orcamentoStatusSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
 
 function calcTotais(itens: { quantidade: number; valorUnitario: number }[], desconto: number, impostos: number) {
-  const subtotal = itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0);
-  const descontoVal = subtotal * desconto / 100;
-  const impostosVal = (subtotal - descontoVal) * impostos / 100;
-  return { subtotal, total: subtotal - descontoVal + impostosVal };
+  const subtotal = Math.round(itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0) * 100) / 100;
+  const descontoVal = Math.round(subtotal * desconto) / 100;
+  const impostosVal = Math.round((subtotal - descontoVal) * impostos) / 100;
+  return { subtotal, total: Math.round((subtotal - descontoVal + impostosVal) * 100) / 100 };
 }
 
 function proximoNumero(atual: string | null) {
@@ -35,13 +36,9 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   res.json(o);
 });
 
-const VALID_STATUS = ['rascunho', 'enviado', 'aguardando', 'aprovado', 'recusado'];
-
-router.post('/', async (req: AuthRequest, res: Response) => {
-  const { clienteId, clienteNome, contato, status, itens = [], desconto = 0, impostos = 0,
+router.post('/', validar(orcamentoSchema), async (req: AuthRequest, res: Response) => {
+  const { clienteId, clienteNome, contato, status, itens, desconto, impostos,
           observacoes, validade, criadoEm } = req.body;
-  if (!clienteId) { res.status(400).json({ erro: 'Cliente obrigatório' }); return; }
-
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
 
   for (let tentativa = 0; tentativa < 5; tentativa++) {
@@ -50,17 +47,14 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     try {
       const o = await prisma.orcamento.create({
         data: {
-          numero, clienteId, clienteNome: clienteNome || '', contato: contato || '',
-          status: status || 'rascunho', desconto: Number(desconto), impostos: Number(impostos),
-          observacoes: observacoes || '', validade: validade || '',
+          numero, clienteId, clienteNome, contato,
+          status, desconto, impostos, observacoes, validade,
           criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
           subtotal, total,
-          itens: {
-            create: itens.map((i: any) => ({
-              descricao: i.descricao, quantidade: Number(i.quantidade),
-              valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
-            })),
-          },
+          itens: { create: itens.map((i: any) => ({
+            descricao: i.descricao, quantidade: i.quantidade,
+            valorUnitario: i.valorUnitario, periodo: i.periodo || null,
+          })) },
         },
         include: { itens: true },
       });
@@ -74,26 +68,21 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.put('/:id', async (req: AuthRequest, res: Response) => {
-  const { clienteId, clienteNome, contato, status, itens = [], desconto = 0,
-          impostos = 0, observacoes, validade } = req.body;
-  if (!clienteId) { res.status(400).json({ erro: 'Cliente obrigatório' }); return; }
+router.put('/:id', validar(orcamentoSchema), async (req: AuthRequest, res: Response) => {
+  const { clienteId, clienteNome, contato, status, itens, desconto, impostos,
+          observacoes, validade } = req.body;
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
-
   try {
     await prisma.orcamentoItem.deleteMany({ where: { orcamentoId: req.params.id } });
     const o = await prisma.orcamento.update({
       where: { id: req.params.id },
       data: {
-        clienteId, clienteNome: clienteNome || '', contato: contato || '',
-        status: status || 'rascunho', desconto: Number(desconto), impostos: Number(impostos),
-        observacoes: observacoes || '', validade: validade || '', subtotal, total,
-        itens: {
-          create: itens.map((i: any) => ({
-            descricao: i.descricao, quantidade: Number(i.quantidade),
-            valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
-          })),
-        },
+        clienteId, clienteNome, contato, status, desconto, impostos,
+        observacoes, validade, subtotal, total,
+        itens: { create: itens.map((i: any) => ({
+          descricao: i.descricao, quantidade: i.quantidade,
+          valorUnitario: i.valorUnitario, periodo: i.periodo || null,
+        })) },
       },
       include: { itens: true },
     });
@@ -101,10 +90,8 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }
 });
 
-router.patch('/:id/status', async (req: AuthRequest, res: Response) => {
+router.patch('/:id/status', validar(orcamentoStatusSchema), async (req: AuthRequest, res: Response) => {
   const { status } = req.body;
-  if (!status) { res.status(400).json({ erro: 'Status obrigatório' }); return; }
-  if (!VALID_STATUS.includes(status)) { res.status(400).json({ erro: `Status inválido. Use: ${VALID_STATUS.join(', ')}` }); return; }
   try {
     const o = await prisma.orcamento.update({
       where: { id: req.params.id }, data: { status }, include: { itens: true },
@@ -113,7 +100,7 @@ router.patch('/:id/status', async (req: AuthRequest, res: Response) => {
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }
 });
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', apenasAdmin, async (req: AuthRequest, res: Response) => {
   try {
     await prisma.orcamento.delete({ where: { id: req.params.id } });
     res.status(204).send();

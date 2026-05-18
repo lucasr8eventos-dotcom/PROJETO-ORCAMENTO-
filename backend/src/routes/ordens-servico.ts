@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { validar, osSchema, osUpdateSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
@@ -23,11 +24,11 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   res.json(os);
 });
 
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', validar(osSchema), async (req: AuthRequest, res: Response) => {
   const {
     vendaId, vendaNumero, orcamentoNumero, clienteId, clienteNome, contato,
     enderecoEvento, dataMontagem, dataRetirada, horarioInicio, horarioFim,
-    equipe, motorista, observacoesOperacionais, itens = [], criadoEm,
+    equipe, motorista, observacoesOperacionais, itens, criadoEm,
   } = req.body;
 
   for (let tentativa = 0; tentativa < 5; tentativa++) {
@@ -38,19 +39,14 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       const os = await prisma.ordemServico.create({
         data: {
           numero, vendaId, vendaNumero, orcamentoNumero, clienteId,
-          clienteNome: clienteNome || '', contato: contato || '',
-          enderecoEvento: enderecoEvento || '', dataMontagem: dataMontagem || '',
-          dataRetirada: dataRetirada || '', horarioInicio: horarioInicio || '',
-          horarioFim: horarioFim || '', equipe: equipe || '', motorista: motorista || '',
-          observacoesOperacionais: observacoesOperacionais || '',
+          clienteNome, contato, enderecoEvento, dataMontagem, dataRetirada,
+          horarioInicio, horarioFim, equipe, motorista, observacoesOperacionais,
           status: 'pendente',
           criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
-          itens: {
-            create: itens.map((i: any) => ({
-              descricao: i.descricao, quantidade: Number(i.quantidade),
-              valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
-            })),
-          },
+          itens: { create: itens.map((i: any) => ({
+            descricao: i.descricao, quantidade: i.quantidade,
+            valorUnitario: i.valorUnitario, periodo: i.periodo || null,
+          })) },
         },
         include: { itens: true },
       });
@@ -64,7 +60,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.put('/:id', async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(osUpdateSchema), async (req: AuthRequest, res: Response) => {
   const {
     enderecoEvento, dataMontagem, dataRetirada, horarioInicio, horarioFim,
     equipe, motorista, observacoesOperacionais, status,
@@ -73,10 +69,8 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
     const os = await prisma.ordemServico.update({
       where: { id: req.params.id },
       data: {
-        enderecoEvento: enderecoEvento || '', dataMontagem: dataMontagem || '',
-        dataRetirada: dataRetirada || '', horarioInicio: horarioInicio || '',
-        horarioFim: horarioFim || '', equipe: equipe || '', motorista: motorista || '',
-        observacoesOperacionais: observacoesOperacionais || '',
+        enderecoEvento, dataMontagem, dataRetirada, horarioInicio, horarioFim,
+        equipe, motorista, observacoesOperacionais,
         status: status || 'pendente',
       },
     });
@@ -84,7 +78,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
   } catch { res.status(404).json({ erro: 'OS não encontrada' }); }
 });
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', apenasAdmin, async (req: AuthRequest, res: Response) => {
   try {
     await prisma.ordemServico.delete({ where: { id: req.params.id } });
     res.status(204).send();

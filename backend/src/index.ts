@@ -13,34 +13,58 @@ import eventosRoutes from './routes/eventos';
 import usuariosRoutes from './routes/usuarios';
 import pdfsRoutes from './routes/pdfs';
 
+// Importa lib/jwt para garantir validação de JWT_SECRET na inicialização
+import './lib/jwt';
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 
-// Garante que o diretório de uploads existe
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 if (!fs.existsSync(path.join(UPLOAD_DIR, 'pdfs'))) fs.mkdirSync(path.join(UPLOAD_DIR, 'pdfs'), { recursive: true });
 
-app.use(cors({ origin: true, credentials: true }));
+// CORS: lista branca via ALLOWED_ORIGINS (separada por vírgula). Sem a variável,
+// permite tudo (compatível com dev/single-tenant). Em prod multi-cliente, defina.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // server-to-server, curl, Postman
+    if (allowedOrigins.length === 0) return cb(null, true); // lista vazia = aberto (dev)
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`Origin ${origin} não permitida`));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve PDFs estaticamente
-app.use('/uploads', express.static(path.resolve(UPLOAD_DIR)));
-
 // Rotas
-app.use('/api/auth',          authRoutes);
-app.use('/api/clientes',      clientesRoutes);
-app.use('/api/produtos',      produtosRoutes);
-app.use('/api/orcamentos',    orcamentosRoutes);
-app.use('/api/vendas',        vendasRoutes);
+app.use('/api/auth',           authRoutes);
+app.use('/api/clientes',       clientesRoutes);
+app.use('/api/produtos',       produtosRoutes);
+app.use('/api/orcamentos',     orcamentosRoutes);
+app.use('/api/vendas',         vendasRoutes);
 app.use('/api/ordens-servico', ordensServicoRoutes);
-app.use('/api/eventos',       eventosRoutes);
-app.use('/api/usuarios',      usuariosRoutes);
-app.use('/api/pdfs',          pdfsRoutes);
+app.use('/api/eventos',        eventosRoutes);
+app.use('/api/usuarios',       usuariosRoutes);
+app.use('/api/pdfs',           pdfsRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+// Tratamento de erros (incluindo CORS bloqueado)
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err?.message?.includes('Origin') && err.message.includes('não permitida')) {
+    res.status(403).json({ erro: err.message });
+    return;
+  }
+  console.error('Erro não tratado:', err);
+  res.status(500).json({ erro: 'Erro interno do servidor' });
+});
+
 app.listen(PORT, () => {
   console.log(`OpSuite API rodando na porta ${PORT}`);
+  if (allowedOrigins.length > 0) console.log(`CORS restrito a: ${allowedOrigins.join(', ')}`);
+  else console.log('CORS: aberto (defina ALLOWED_ORIGINS para restringir em produção)');
 });

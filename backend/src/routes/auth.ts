@@ -2,13 +2,14 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import JWT_SECRET from '../lib/jwt';
 import { autenticar, AuthRequest } from '../middleware/auth';
+import { validar, loginSchema } from '../lib/validacao';
 
 const router = Router();
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', validar(loginSchema), async (req: Request, res: Response) => {
   const { email, senha } = req.body;
-  if (!email || !senha) { res.status(400).json({ erro: 'E-mail e senha obrigatórios' }); return; }
 
   const usuario = await prisma.usuario.findUnique({ where: { email: email.toLowerCase() } });
   if (!usuario) { res.status(401).json({ erro: 'E-mail não encontrado' }); return; }
@@ -19,7 +20,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
   const token = jwt.sign(
     { id: usuario.id, role: usuario.role },
-    process.env.JWT_SECRET || 'secret',
+    JWT_SECRET,
     { expiresIn: '12h' }
   );
 

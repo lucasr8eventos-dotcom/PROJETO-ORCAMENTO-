@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { validar, usuarioCreateSchema, usuarioUpdateSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
@@ -24,27 +25,24 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   res.json(u);
 });
 
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', validar(usuarioCreateSchema), async (req: AuthRequest, res: Response) => {
   const { nome, email, senha, role } = req.body;
-  if (!nome || !email || !senha) {
-    res.status(400).json({ erro: 'Nome, e-mail e senha são obrigatórios' }); return;
-  }
   const existe = await prisma.usuario.findUnique({ where: { email } });
   if (existe) { res.status(409).json({ erro: 'E-mail já cadastrado' }); return; }
 
   const hash = await bcrypt.hash(senha, 10);
   const u = await prisma.usuario.create({
-    data: { nome, email, senha: hash, role: role || 'operador', ativo: true, criadoEm: new Date().toISOString().slice(0, 10) },
+    data: { nome, email, senha: hash, role: role || 'operacional', ativo: true, criadoEm: new Date().toISOString().slice(0, 10) },
     select: { id: true, nome: true, email: true, role: true, ativo: true, criadoEm: true },
   });
   res.status(201).json(u);
 });
 
-router.put('/:id', async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(usuarioUpdateSchema), async (req: AuthRequest, res: Response) => {
   const { nome, email, senha, role, ativo } = req.body;
-  if (!nome || !email) { res.status(400).json({ erro: 'Nome e e-mail são obrigatórios' }); return; }
-
-  const data: any = { nome, email, role: role || 'operador', ativo: ativo !== false };
+  const data: any = { nome, email };
+  if (role !== undefined) data.role = role;
+  if (ativo !== undefined) data.ativo = ativo;
   if (senha) data.senha = await bcrypt.hash(senha, 10);
 
   try {
@@ -58,6 +56,10 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 });
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
+  if (req.params.id === req.userId) {
+    res.status(400).json({ erro: 'Não é possível excluir o próprio usuário' });
+    return;
+  }
   try {
     await prisma.usuario.delete({ where: { id: req.params.id } });
     res.status(204).send();
