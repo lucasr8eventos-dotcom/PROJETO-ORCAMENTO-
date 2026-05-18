@@ -69,25 +69,57 @@ app.use('/api/pdfs',           pdfsRoutes);
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 // --- Serve o frontend (build do React) na mesma origem ---
-// Tenta vários locais possíveis para o diretório build
 const candidatos = [
-  path.resolve(__dirname, '../../build'),  // monorepo: backend/dist/index.js → ../../build
+  path.resolve(__dirname, '../../build'),
   path.resolve(__dirname, '../../../build'),
+  path.resolve(__dirname, '../build'),
   path.resolve(process.cwd(), 'build'),
   path.resolve(process.cwd(), '../build'),
+  '/app/build',
+  '/app/backend/build',
 ];
+console.log('--- Procurando build do frontend ---');
+console.log(`__dirname: ${__dirname}`);
+console.log(`process.cwd(): ${process.cwd()}`);
+candidatos.forEach(p => {
+  const exists = fs.existsSync(path.join(p, 'index.html'));
+  console.log(`  ${exists ? '✓' : '✗'} ${p}`);
+});
 const FRONTEND_BUILD = candidatos.find(p => fs.existsSync(path.join(p, 'index.html')));
 
+// Endpoint de debug - sempre disponível
+app.get('/api/debug/paths', (_req, res) => {
+  res.json({
+    __dirname,
+    cwd: process.cwd(),
+    candidatos: candidatos.map(p => ({ path: p, exists: fs.existsSync(path.join(p, 'index.html')) })),
+    frontendBuild: FRONTEND_BUILD,
+    railwayEnv: {
+      RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT,
+      RAILWAY_PROJECT_NAME: process.env.RAILWAY_PROJECT_NAME,
+      RAILWAY_SERVICE_NAME: process.env.RAILWAY_SERVICE_NAME,
+      NODE_ENV: process.env.NODE_ENV,
+    },
+  });
+});
+
 if (FRONTEND_BUILD) {
-  console.log(`Servindo frontend de: ${FRONTEND_BUILD}`);
+  console.log(`✓ Servindo frontend de: ${FRONTEND_BUILD}`);
   app.use(express.static(FRONTEND_BUILD));
-  // SPA fallback: qualquer rota não-API/não-uploads retorna index.html
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next();
     res.sendFile(path.join(FRONTEND_BUILD, 'index.html'));
   });
 } else {
-  console.warn('AVISO: build do frontend não encontrado. Servindo apenas API.');
+  console.warn('✗ AVISO: build do frontend não encontrado. Acesse /api/debug/paths para diagnóstico.');
+  // Fallback: rota raiz mostra info útil em vez de "Cannot GET /"
+  app.get('/', (_req, res) => {
+    res.status(503).send(`
+      <h1>OpSuite Backend</h1>
+      <p>API ativa mas frontend não encontrado. Acesse <a href="/api/debug/paths">/api/debug/paths</a> para diagnóstico.</p>
+      <p>Endpoints: /api/health, /api/auth/login, etc.</p>
+    `);
+  });
 }
 
 // --- Tratamento de erros ---
