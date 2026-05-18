@@ -16,7 +16,7 @@ import usuariosRoutes from './routes/usuarios';
 import pdfsRoutes from './routes/pdfs';
 import prisma from './lib/prisma';
 
-// Importa lib/jwt para garantir validação de JWT_SECRET na inicialização
+// Garante validação do JWT_SECRET na inicialização
 import './lib/jwt';
 
 const app = express();
@@ -26,11 +26,6 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 if (!fs.existsSync(path.join(UPLOAD_DIR, 'pdfs'))) fs.mkdirSync(path.join(UPLOAD_DIR, 'pdfs'), { recursive: true });
 
-// CORS: lista branca via ALLOWED_ORIGINS (separada por vírgula). Sem a variável,
-// permite tudo (compatível com dev/single-tenant). Em prod multi-cliente, defina.
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-  .split(',').map(s => s.trim()).filter(Boolean);
-
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
@@ -38,21 +33,30 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS: reflete o origin do request (segurança feita pelo JWT, não por lista de origins)
-// credentials:true + origin:true garante que Authorization header passe pelo preflight
-const corsOptions: cors.CorsOptions = {
-  origin: true,
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  optionsSuccessStatus: 200,
-};
-app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
+// CORS de fallback (caso o frontend seja acessado em domínio diferente do backend).
+// Quando frontend e backend estão na mesma origem, esses headers são ignorados pelo browser.
+// Implementação manual para garantir 100% de compatibilidade com preflight de qualquer ambiente.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  next();
+});
+app.use(cors()); // backup adicional
+
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas
+// --- Rotas da API ---
 app.use('/api/auth',           authRoutes);
 app.use('/api/clientes',       clientesRoutes);
 app.use('/api/produtos',       produtosRoutes);
@@ -62,10 +66,31 @@ app.use('/api/ordens-servico', ordensServicoRoutes);
 app.use('/api/eventos',        eventosRoutes);
 app.use('/api/usuarios',       usuariosRoutes);
 app.use('/api/pdfs',           pdfsRoutes);
-
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-// Tratamento de erros
+// --- Serve o frontend (build do React) na mesma origem ---
+// Tenta vários locais possíveis para o diretório build
+const candidatos = [
+  path.resolve(__dirname, '../../build'),  // monorepo: backend/dist/index.js → ../../build
+  path.resolve(__dirname, '../../../build'),
+  path.resolve(process.cwd(), 'build'),
+  path.resolve(process.cwd(), '../build'),
+];
+const FRONTEND_BUILD = candidatos.find(p => fs.existsSync(path.join(p, 'index.html')));
+
+if (FRONTEND_BUILD) {
+  console.log(`Servindo frontend de: ${FRONTEND_BUILD}`);
+  app.use(express.static(FRONTEND_BUILD));
+  // SPA fallback: qualquer rota não-API/não-uploads retorna index.html
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next();
+    res.sendFile(path.join(FRONTEND_BUILD, 'index.html'));
+  });
+} else {
+  console.warn('AVISO: build do frontend não encontrado. Servindo apenas API.');
+}
+
+// --- Tratamento de erros ---
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Erro não tratado:', err);
   res.status(500).json({ erro: 'Erro interno do servidor' });
@@ -87,8 +112,6 @@ async function seedAdmin() {
 }
 
 app.listen(PORT, () => {
-  console.log(`OpSuite API rodando na porta ${PORT}`);
-  if (allowedOrigins.length > 0) console.log(`CORS restrito a: ${allowedOrigins.join(', ')}`);
-  else console.log('CORS: aberto (define ALLOWED_ORIGINS para restringir em produção)');
+  console.log(`OpSuite rodando na porta ${PORT}`);
   seedAdmin();
 });

@@ -1,6 +1,7 @@
 import cfg from './config';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://heartfelt-hope-production-9a25.up.railway.app';
+// Vazio = mesma origem (backend serve frontend). Em dev/CRA, REACT_APP_API_URL aponta para o backend local.
+const API_BASE = process.env.REACT_APP_API_URL ?? '';
 
 function token() { return localStorage.getItem(cfg.tokenKey) || ''; }
 
