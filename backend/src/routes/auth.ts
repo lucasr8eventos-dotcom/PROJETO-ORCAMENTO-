@@ -1,14 +1,14 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import JWT_SECRET from '../lib/jwt';
-import { autenticar, AuthRequest } from '../middleware/auth';
+import { autenticar, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, loginSchema } from '../lib/validacao';
 
 const router = Router();
 
-router.post('/login', validar(loginSchema), async (req: Request, res: Response) => {
+router.post('/login', validar(loginSchema), asyncHandler(async (req: Request, res) => {
   const { email, senha } = req.body;
 
   const usuario = await prisma.usuario.findUnique({ where: { email: email.toLowerCase() } });
@@ -28,15 +28,15 @@ router.post('/login', validar(loginSchema), async (req: Request, res: Response) 
     token,
     usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role },
   });
-});
+}));
 
-router.get('/me', autenticar, async (req: AuthRequest, res: Response) => {
+router.get('/me', autenticar, asyncHandler(async (req: AuthRequest, res) => {
   const usuario = await prisma.usuario.findUnique({
     where: { id: req.userId },
     select: { id: true, nome: true, email: true, role: true, ativo: true },
   });
   if (!usuario) { res.status(404).json({ erro: 'Usuário não encontrado' }); return; }
   res.json(usuario);
-});
+}));
 
 export default router;

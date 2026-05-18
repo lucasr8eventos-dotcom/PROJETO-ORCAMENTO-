@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 import authRoutes from './routes/auth';
 import clientesRoutes from './routes/clientes';
@@ -13,6 +14,7 @@ import ordensServicoRoutes from './routes/ordens-servico';
 import eventosRoutes from './routes/eventos';
 import usuariosRoutes from './routes/usuarios';
 import pdfsRoutes from './routes/pdfs';
+import prisma from './lib/prisma';
 
 // Importa lib/jwt para garantir validação de JWT_SECRET na inicialização
 import './lib/jwt';
@@ -71,8 +73,24 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(500).json({ erro: 'Erro interno do servidor' });
 });
 
+async function seedAdmin() {
+  try {
+    const existe = await prisma.usuario.findUnique({ where: { email: 'admin@opsuite.com' } });
+    if (existe) { console.log('Seed: admin já existe, pulando.'); return; }
+    const hash = await bcrypt.hash('admin123', 10);
+    await prisma.usuario.create({
+      data: { nome: 'Administrador', email: 'admin@opsuite.com', senha: hash,
+              role: 'admin', ativo: true, criadoEm: new Date().toISOString().slice(0, 10) },
+    });
+    console.log('Seed: usuário admin criado — admin@opsuite.com / admin123');
+  } catch (e) {
+    console.error('Seed: erro ao criar admin (não crítico):', e);
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`OpSuite API rodando na porta ${PORT}`);
   if (allowedOrigins.length > 0) console.log(`CORS restrito a: ${allowedOrigins.join(', ')}`);
   else console.log('CORS: aberto (defina ALLOWED_ORIGINS para restringir em produção)');
+  seedAdmin();
 });
