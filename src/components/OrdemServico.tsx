@@ -5,6 +5,7 @@ import { fmtMoeda } from './ui';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Relatorio from './Relatorio';
+import cfg from '../config';
 
 interface Props {
   ordens: OS[];
@@ -69,7 +70,7 @@ function OsPrintModal({ osPrint, onClose, statusMap }: { osPrint: OS; onClose: (
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
             <div>
               <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 26, letterSpacing: '-0.5px', color: '#111' }}>ORDEM DE SERVIÇO</div>
-              <div style={{ fontSize: 15, color: '#6b7280', marginTop: 2 }}>OpSuite · Plataforma Operacional</div>
+              <div style={{ fontSize: 15, color: '#6b7280', marginTop: 2 }}>{cfg.nome} · {cfg.tagline}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 24, color: '#1d4ed8' }}>{osPrint.numero}</div>
@@ -174,7 +175,7 @@ function OsPrintModal({ osPrint, onClose, statusMap }: { osPrint: OS; onClose: (
           </div>
 
           <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
-            <span>OpSuite — Plataforma Operacional</span>
+            <span>{cfg.nome} — {cfg.tagline}</span>
             <span>{osPrint.numero} · {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
           </div>
         </div>

@@ -32,6 +32,7 @@ export function apenasAdmin(req: AuthRequest, res: Response, next: NextFunction)
   next();
 }
 
+// Wrapper para capturar erros de handlers async e encaminhar ao error handler global
 export function asyncHandler(fn: (req: AuthRequest, res: Response, next: NextFunction) => Promise<any>): RequestHandler {
   return (req, res, next) => fn(req as AuthRequest, res, next).catch(next);
 }

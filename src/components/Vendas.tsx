@@ -10,7 +10,7 @@ import Relatorio from './Relatorio';
 interface Props {
   vendas: Venda[];
   userRole: 'admin' | 'operacional';
-  onSalvar: (v: Venda) => void;
+  onSalvar: (v: Venda) => void | Promise<void>;
   onDelete: (id: string) => void;
   onVerOS: (vendaId: string) => void;
 }

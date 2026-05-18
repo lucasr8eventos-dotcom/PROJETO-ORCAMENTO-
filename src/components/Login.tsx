@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Usuario } from '../types';
 import { authApi } from '../api';
+import cfg from '../config';
 
 interface Props {
   onLogin: (usuario: Usuario) => void;
@@ -19,6 +20,7 @@ export default function Login({ onLogin }: Props) {
     setLoading(true);
     try {
       const { token, usuario } = await authApi.login(email, senha);
+      localStorage.setItem(cfg.tokenKey, token);
       localStorage.setItem('opsuite_token', token);
       onLogin({ ...usuario, senha: '', role: usuario.role as any, ativo: true, criadoEm: '' });
     } catch (e: any) {
@@ -32,9 +34,9 @@ export default function Login({ onLogin }: Props) {
     <div style={{ minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center',padding:20 }}>
       <div style={{ width:'100%',maxWidth:420 }}>
         <div style={{ textAlign:'center',marginBottom:40 }}>
-          <div style={{ width:52,height:52,background:'var(--text)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px',fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:800,color:'#fff' }}>OP</div>
-          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:24,fontWeight:800,letterSpacing:'-0.5px' }}>OpSuite</div>
-          <div style={{ fontSize:14,color:'var(--text2)',marginTop:4 }}>Plataforma Operacional</div>
+          <div style={{ width:52,height:52,background:'var(--text)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px',fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:800,color:'#fff' }}>{cfg.sigla}</div>
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:24,fontWeight:800,letterSpacing:'-0.5px' }}>{cfg.nome}</div>
+          <div style={{ fontSize:14,color:'var(--text2)',marginTop:4 }}>{cfg.tagline}</div>
         </div>
         <div style={{ background:'var(--surface)',border:'1px solid var(--border)',borderRadius:18,padding:'32px 32px' }}>
           <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:700,marginBottom:6 }}>Entrar na plataforma</div>

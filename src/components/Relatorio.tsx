@@ -4,6 +4,7 @@ import { Orcamento, Venda, OrdemServico, SituacaoVenda, OSStatus, OrcamentoStatu
 import { fmtMoeda } from './ui';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import cfg from '../config';
 
 type Tipo = 'orcamentos' | 'vendas' | 'ordens';
 
@@ -280,7 +281,7 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
               <div style={{ fontSize: 13.5, color: '#6b7280', marginTop: 3 }}>Período: {periodoLabel}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#1d4ed8' }}>OpSuite</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#1d4ed8' }}>{cfg.nome}</div>
               <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Emitido em {emissaoLabel}</div>
             </div>
           </div>
@@ -293,7 +294,7 @@ export default function Relatorio({ tipo, orcamentos = [], vendas = [], ordens =
 
           {/* Rodapé */}
           <div style={{ marginTop: 28, paddingTop: 14, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af' }}>
-            <span>OpSuite — Plataforma Operacional</span>
+            <span>{cfg.nome} — {cfg.tagline}</span>
             <span>{tituloTipo[tipo]} · {periodoLabel}</span>
           </div>
         </div>
