@@ -31,24 +31,21 @@ if (!fs.existsSync(path.join(UPLOAD_DIR, 'pdfs'))) fs.mkdirSync(path.join(UPLOAD
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 
-// Helmet: desabilita headers que bloqueiam requisições cross-origin (API pública com CORS próprio)
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
   crossOriginOpenerPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
+
+// CORS: reflete o origin do request (segurança feita pelo JWT, não por lista de origins)
+// credentials:true + origin:true garante que Authorization header passe pelo preflight
 const corsOptions: cors.CorsOptions = {
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
-    if (allowedOrigins.length === 0) return cb(null, true);
-    if (allowedOrigins.includes(origin)) return cb(null, true);
-    if (/^https:\/\/[a-z0-9-]+\.up\.railway\.app$/i.test(origin)) return cb(null, true);
-    cb(new Error(`Origin ${origin} não permitida`));
-  },
+  origin: true,
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  optionsSuccessStatus: 200,
 };
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
@@ -68,12 +65,8 @@ app.use('/api/pdfs',           pdfsRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-// Tratamento de erros (incluindo CORS bloqueado)
+// Tratamento de erros
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  if (err?.message?.includes('Origin') && err.message.includes('não permitida')) {
-    res.status(403).json({ erro: err.message });
-    return;
-  }
   console.error('Erro não tratado:', err);
   res.status(500).json({ erro: 'Erro interno do servidor' });
 });
@@ -96,6 +89,6 @@ async function seedAdmin() {
 app.listen(PORT, () => {
   console.log(`OpSuite API rodando na porta ${PORT}`);
   if (allowedOrigins.length > 0) console.log(`CORS restrito a: ${allowedOrigins.join(', ')}`);
-  else console.log('CORS: aberto (defina ALLOWED_ORIGINS para restringir em produção)');
+  else console.log('CORS: aberto (define ALLOWED_ORIGINS para restringir em produção)');
   seedAdmin();
 });
