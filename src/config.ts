@@ -1,7 +1,10 @@
 const nome    = process.env.REACT_APP_EMPRESA_NOME    || 'OpSuite';
 const sigla   = process.env.REACT_APP_EMPRESA_SIGLA   || 'OP';
 const tagline = process.env.REACT_APP_EMPRESA_TAGLINE || 'Plataforma Operacional';
-const tokenKey = `${sigla.toLowerCase().replace(/[^a-z0-9]/g, '_')}_token`;
+// Quando REACT_APP_EMPRESA_SIGLA não está definida, usa a chave histórica para não quebrar sessões existentes
+const tokenKey = process.env.REACT_APP_EMPRESA_SIGLA
+  ? `${sigla.toLowerCase().replace(/[^a-z0-9]/g, '_')}_token`
+  : 'opsuite_token';
 
 // Aplica cores customizadas como CSS variables (opcional por cliente)
 const corNavbar   = process.env.REACT_APP_COR_NAVBAR;
