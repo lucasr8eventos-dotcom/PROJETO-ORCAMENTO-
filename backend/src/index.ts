@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 
@@ -15,7 +14,6 @@ import eventosRoutes from './routes/eventos';
 import usuariosRoutes from './routes/usuarios';
 import pdfsRoutes from './routes/pdfs';
 
-// Importa lib/jwt para garantir validação de JWT_SECRET na inicialização
 import './lib/jwt';
 
 const app = express();
@@ -28,23 +26,12 @@ if (!fs.existsSync(path.join(UPLOAD_DIR, 'pdfs'))) fs.mkdirSync(path.join(UPLOAD
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 
-// Helmet: desabilita headers que bloqueiam requisições cross-origin (API pública com CORS próprio)
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
   crossOriginOpenerPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
-app.set('trust proxy', 1);
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
@@ -57,7 +44,7 @@ app.use(cors({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/auth',           authLimiter, authRoutes);
+app.use('/api/auth',           authRoutes);
 app.use('/api/clientes',       clientesRoutes);
 app.use('/api/produtos',       produtosRoutes);
 app.use('/api/orcamentos',     orcamentosRoutes);
