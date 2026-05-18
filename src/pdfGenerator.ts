@@ -16,7 +16,7 @@ const defaultConfig: ConfigEmpresa = {
   email: '', telefone: '', endereco: '', logo: '',
 };
 
-export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, cliente?: Cliente) {
+export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, cliente?: Cliente): string | undefined {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210;
   const M = 13;
@@ -128,7 +128,6 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
   const validColW = 46;
   const sepX = W - M - validColW;
 
-  // --- dados do cliente (lado esquerdo) ---
   const clientName = orc.clienteNome?.trim() || 'CONSUMIDOR';
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
@@ -151,7 +150,6 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
 
   const clientH = Math.max(24, 18 + clientLines.length * 5);
 
-  // --- separador vertical e validade (lado direito) ---
   doc.setDrawColor(...C.line);
   doc.setLineWidth(0.3);
   doc.line(sepX, clientTop, sepX, clientTop + clientH);
