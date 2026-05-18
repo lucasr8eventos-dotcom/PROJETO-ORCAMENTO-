@@ -43,6 +43,8 @@ app.use(cors({
     if (!origin) return cb(null, true); // server-to-server, curl, Postman
     if (allowedOrigins.length === 0) return cb(null, true); // lista vazia = aberto (dev)
     if (allowedOrigins.includes(origin)) return cb(null, true);
+    // Auto-permite subdomínios do Railway (mesmo projeto) para evitar lockout
+    if (/^https:\/\/[a-z0-9-]+\.up\.railway\.app$/i.test(origin)) return cb(null, true);
     cb(new Error(`Origin ${origin} não permitida`));
   },
   credentials: true,
