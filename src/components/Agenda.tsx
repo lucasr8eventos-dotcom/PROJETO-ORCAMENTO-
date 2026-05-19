@@ -70,11 +70,11 @@ export default function Agenda({ eventos, onSalvar, onDelete, onToggle }: Props)
     <div>
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap',gap:10 }}>
         <div style={{ display:'flex',alignItems:'center',gap:10 }}>
-          <button onClick={()=>setSemana(d=>addDays(d,-7))} style={{ width:34,height:34,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',fontSize:16 }}>←</button>
+          <button onClick={()=>setSemana((d:Date)=>addDays(d,-7))} style={{ width:34,height:34,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',fontSize:16 }}>←</button>
           <span style={{ fontFamily:"'Outfit',sans-serif",fontSize:15,fontWeight:600,minWidth:200,textAlign:'center' }}>
             {format(semana,'d')} – {format(addDays(semana,6),"d 'de' MMMM",{locale:ptBR})}
           </span>
-          <button onClick={()=>setSemana(d=>addDays(d,7))} style={{ width:34,height:34,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',fontSize:16 }}>→</button>
+          <button onClick={()=>setSemana((d:Date)=>addDays(d,7))} style={{ width:34,height:34,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',fontSize:16 }}>→</button>
           <button onClick={()=>setSemana(startOfWeek(new Date(),{weekStartsOn:0}))} style={{ padding:'7px 12px',borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',fontSize:13,fontFamily:"'Inter',sans-serif",color:'var(--text2)' }}>Hoje</button>
         </div>
         <Btn variant="primary" icon={<span>+</span>} onClick={()=>abrirNovo()}>Novo evento</Btn>
