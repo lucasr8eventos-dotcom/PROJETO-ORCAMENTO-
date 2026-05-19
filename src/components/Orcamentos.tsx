@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Orcamento, OrcamentoStatus } from '../types';
 import { Card, StatusBadge, Btn, Tabs, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
+import { loadConfig } from './Configuracoes';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -93,7 +94,7 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
                     <td style={{ padding:'11px 14px' }}><StatusBadge status={o.status} /></td>
                     <td style={{ padding:'11px 14px' }}>
                       <div style={{ display:'flex',gap:6,position:'relative' }}>
-                        <button onClick={()=>gerarPDF(o)} title="Gerar PDF" style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
+                        <button onClick={()=>gerarPDF(o, loadConfig())} title="Gerar PDF" style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
                         </button>
                         <div style={{ position:'relative' }}>

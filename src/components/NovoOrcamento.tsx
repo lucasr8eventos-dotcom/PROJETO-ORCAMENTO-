@@ -189,7 +189,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           </div>
         </div>
 
-        <div style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 1fr 0.8fr 36px',gap:8,padding:'8px 12px',background:'var(--surface2)',borderRadius:'9px 9px 0 0',fontSize:11,color:'var(--text3)',fontWeight:500,letterSpacing:'0.5px' }}>
+        <div style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 0.8fr 0.8fr 36px',gap:8,padding:'8px 12px',background:'var(--surface2)',borderRadius:'9px 9px 0 0',fontSize:11,color:'var(--text3)',fontWeight:500,letterSpacing:'0.5px' }}>
           <span>DESCRIÇÃO</span><span>QUANTIDADE</span><span>VL. UNITÁRIO</span><span>DETALHE DO ITEM</span><span style={{textAlign:'right'}}>TOTAL</span><span></span>
         </div>
         <div style={{ border:'1px solid var(--border)',borderTop:'none',borderRadius:'0 0 9px 9px',overflow:'hidden' }}>
