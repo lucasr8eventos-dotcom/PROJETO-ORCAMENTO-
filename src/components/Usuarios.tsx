@@ -22,7 +22,7 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
 
-  const abrirNovo = () => { setForm(empty()); setErro(''); setMostrarSenha(false); setModal(true); };
+  const abrirNovo = () => { setForm(empty()); setErro(''); setMostrarSenha(true); setModal(true); };
   const abrirEditar = (u: Usuario) => { setForm({ ...u, senha: '' }); setErro(''); setMostrarSenha(false); setModal(true); };
 
   const salvar = () => {
