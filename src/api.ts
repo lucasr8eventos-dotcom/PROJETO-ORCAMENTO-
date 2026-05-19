@@ -4,12 +4,7 @@ import cfg from './config';
 const API_BASE = process.env.REACT_APP_API_URL ?? '';
 
 function token(): string {
-  const t = localStorage.getItem(cfg.tokenKey) || localStorage.getItem('opsuite_token');
-  if (!t) {
-    window.location.reload();
-    throw new Error('Sessão expirada. Faça login novamente.');
-  }
-  return t;
+  return localStorage.getItem(cfg.tokenKey) || localStorage.getItem('opsuite_token') || '';
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
