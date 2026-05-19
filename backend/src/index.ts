@@ -39,14 +39,19 @@ app.use(helmet({
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 
+// Quando ALLOWED_ORIGINS não está configurado, permite qualquer origem (padrão seguro para deploy).
+// Quando está configurado, só permite as origens listadas.
+const allowAllOrigins = ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes('*');
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.includes('*'))) {
+  if (allowAllOrigins) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    if (origin) res.setHeader('Vary', 'Origin');
+  } else if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-  } else if (!origin) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
@@ -54,7 +59,6 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   next();
 });
-app.use(cors()); // backup adicional
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));

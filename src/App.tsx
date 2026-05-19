@@ -214,7 +214,11 @@ export default function App() {
 
   const handleLogin = async (u: Usuario) => {
     setUser(u);
-    await carregarDados();
+    try {
+      await carregarDados();
+    } catch (e: any) {
+      addToast(`❌ Erro ao carregar dados: ${e.message || 'verifique a conexão com o servidor'}`);
+    }
   };
 
   const handleLogout = () => {
