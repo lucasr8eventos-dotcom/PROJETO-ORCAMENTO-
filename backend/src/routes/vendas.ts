@@ -9,7 +9,11 @@ router.use(autenticar);
 
 router.get('/', asyncHandler(async (_req, res) => {
   const vendas = await prisma.venda.findMany({
-    include: { pagamentos: true, ordensServico: { select: { id: true, numero: true, status: true } } },
+    include: {
+      pagamentos: true,
+      ordensServico: { select: { id: true, numero: true, status: true } },
+      orcamento: { include: { itens: true } },
+    },
     orderBy: { criadoEm: 'desc' },
   });
   res.json(vendas);
@@ -29,8 +33,12 @@ router.post('/', validar(vendaSchema), asyncHandler(async (req: AuthRequest, res
           desconto, impostos, subtotal, total, observacoes, criadoEm } = req.body;
 
   for (let tentativa = 0; tentativa < 5; tentativa++) {
-    const ultimo = await prisma.venda.findFirst({ orderBy: { numero: 'desc' } });
-    const n = ultimo ? parseInt(ultimo.numero.replace('VND-', ''), 10) + 1 : 1;
+    const rows = await prisma.$queryRaw<{ numero: string }[]>`
+      SELECT numero FROM vendas
+      ORDER BY CAST(REGEXP_REPLACE(numero, '[^0-9]', '', 'g') AS INTEGER) DESC LIMIT 1
+    `;
+    const ultimo = rows[0]?.numero;
+    const n = ultimo ? parseInt(ultimo.replace('VND-', ''), 10) + 1 : 1;
     const numero = `VND-${String(n).padStart(4, '0')}`;
     try {
       const v = await prisma.venda.create({
@@ -63,8 +71,9 @@ router.put('/:id', validar(vendaUpdateSchema), asyncHandler(async (req: AuthRequ
           observacoes: observacoes ?? undefined,
           situacao: situacao ?? undefined,
           editavel: editavel ?? undefined,
-          pagamentos: { create: pagamentos.map((p: { descricao: string; valor: number; vencimento: string; pago: boolean }) => ({
+          pagamentos: { create: pagamentos.map((p: { descricao: string; valor: number; vencimento: string; pago: boolean; pagoEm?: string }) => ({
             descricao: p.descricao, valor: p.valor, vencimento: p.vencimento, pago: p.pago,
+            pagoEm: p.pagoEm ?? null,
           })) },
         },
         include: { pagamentos: true },

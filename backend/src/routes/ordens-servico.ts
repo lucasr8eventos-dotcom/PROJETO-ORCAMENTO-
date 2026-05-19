@@ -32,8 +32,12 @@ router.post('/', validar(osSchema), asyncHandler(async (req: AuthRequest, res) =
   } = req.body;
 
   for (let tentativa = 0; tentativa < 5; tentativa++) {
-    const ultimo = await prisma.ordemServico.findFirst({ orderBy: { numero: 'desc' } });
-    const n = ultimo ? parseInt(ultimo.numero.replace('OS-', ''), 10) + 1 : 1;
+    const rows = await prisma.$queryRaw<{ numero: string }[]>`
+      SELECT numero FROM ordens_servico
+      ORDER BY CAST(REGEXP_REPLACE(numero, '[^0-9]', '', 'g') AS INTEGER) DESC LIMIT 1
+    `;
+    const ultimo = rows[0]?.numero;
+    const n = ultimo ? parseInt(ultimo.replace('OS-', ''), 10) + 1 : 1;
     const numero = `OS-${String(n).padStart(4, '0')}`;
     try {
       const os = await prisma.ordemServico.create({
@@ -72,6 +76,7 @@ router.put('/:id', validar(osUpdateSchema), asyncHandler(async (req: AuthRequest
         equipe, motorista, observacoesOperacionais,
         status: status || 'pendente',
       },
+      include: { itens: true },
     });
     res.json(os);
   } catch { res.status(404).json({ erro: 'OS não encontrada' }); }

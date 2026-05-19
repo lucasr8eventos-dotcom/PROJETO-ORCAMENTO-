@@ -49,7 +49,7 @@ function normalizeOrc(o: any): Orcamento {
   return { ...o, itens: o.itens || [] };
 }
 function normalizeVenda(v: any): Venda {
-  return { ...v, pagamentos: v.pagamentos || [], itens: [] };
+  return { ...v, pagamentos: v.pagamentos || [], itens: v.orcamento?.itens || [] };
 }
 function normalizeOS(o: any): OrdemServico {
   return { ...o, itens: o.itens || [] };

@@ -9,7 +9,7 @@ const fmtVal = (v: number) =>
   v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const fmtData = (s: string) =>
-  format(new Date(s + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR });
+  s ? format(new Date(s + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—';
 
 const defaultConfig: ConfigEmpresa = {
   nome: 'Empresa', razaoSocial: '', cnpj: '', ie: '',

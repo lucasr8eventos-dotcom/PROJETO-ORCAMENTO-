@@ -88,6 +88,7 @@ export const vendaUpdateSchema = z.object({
     valor: z.coerce.number().min(0),
     vencimento: z.string(),
     pago: z.boolean().default(false),
+    pagoEm: z.string().optional(),
   })).default([]),
 });
 

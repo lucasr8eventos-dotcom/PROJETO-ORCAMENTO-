@@ -42,8 +42,11 @@ router.post('/', validar(orcamentoSchema), asyncHandler(async (req: AuthRequest,
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
 
   for (let tentativa = 0; tentativa < 5; tentativa++) {
-    const ultimo = await prisma.orcamento.findFirst({ orderBy: { numero: 'desc' } });
-    const numero = proximoNumero(ultimo?.numero ?? null);
+    const rows = await prisma.$queryRaw<{ numero: string }[]>`
+      SELECT numero FROM orcamentos
+      ORDER BY CAST(REGEXP_REPLACE(numero, '[^0-9]', '', 'g') AS INTEGER) DESC LIMIT 1
+    `;
+    const numero = proximoNumero(rows[0]?.numero ?? null);
     try {
       const o = await prisma.orcamento.create({
         data: {

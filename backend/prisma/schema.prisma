@@ -117,6 +117,7 @@ model PagamentoVenda {
   valor      Float
   vencimento String
   pago       Boolean @default(false)
+  pagoEm     String?
 
   @@map("pagamentos_venda")
 }
