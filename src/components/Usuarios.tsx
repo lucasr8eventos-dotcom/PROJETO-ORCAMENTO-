@@ -114,19 +114,30 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
             <Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@empresa.com" />
           </FormField>
           <FormField label={form.id ? 'Nova senha (deixe vazio para manter)' : 'Senha *'}>
-            <div style={{ position:'relative' }}>
+            {form.id ? (
+              <div style={{ position:'relative' }}>
+                <Input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  value={form.senha}
+                  onChange={e=>setForm({...form,senha:e.target.value})}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  style={{ paddingRight:40 }}
+                />
+                <button type="button" onClick={()=>setMostrarSenha(v=>!v)}
+                  style={{ position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:14,color:'var(--text3)' }}>
+                  {mostrarSenha ? '🙈' : '👁️'}
+                </button>
+              </div>
+            ) : (
               <Input
-                type={mostrarSenha ? 'text' : 'password'}
+                type="text"
                 value={form.senha}
                 onChange={e=>setForm({...form,senha:e.target.value})}
-                placeholder={form.id ? '••••••••' : 'Mínimo 4 caracteres'}
-                style={{ paddingRight:40 }}
+                placeholder="Mínimo 4 caracteres"
+                autoComplete="new-password"
               />
-              <button type="button" onClick={()=>setMostrarSenha(v=>!v)}
-                style={{ position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:14,color:'var(--text3)' }}>
-                {mostrarSenha ? '🙈' : '👁️'}
-              </button>
-            </div>
+            )}
           </FormField>
           <FormField label="Perfil">
             <Select value={form.role} onChange={e=>setForm({...form,role:e.target.value as 'admin'|'operacional'})}>
