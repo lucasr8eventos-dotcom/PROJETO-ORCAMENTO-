@@ -5,6 +5,7 @@ const statusConfig = {
   enviado:   { label: 'Enviado',    bg: 'var(--blue-bg)',  color: 'var(--blue)'  },
   aguardando:{ label: 'Aguardando', bg: 'var(--amber-bg)', color: 'var(--amber)' },
   recusado:  { label: 'Recusado',   bg: 'var(--red-bg)',   color: 'var(--red)'   },
+  cancelado: { label: 'Cancelado',  bg: 'var(--red-bg)',   color: 'var(--red)'   },
   rascunho:  { label: 'Rascunho',   bg: 'var(--surface3)', color: 'var(--text2)' },
 };
 

@@ -27,7 +27,7 @@ const pageTitles: Record<Section, string> = {
   configuracoes: 'Configurações', usuarios: 'Usuários',
 };
 
-function NavItem({ label, icon, active, onClick, badge, dot }: any) {
+function NavItem({ label, icon, active, onClick, badge, dot, badgeTitle }: any) {
   const [hov, setHov] = useState(false);
   return (
     <div onClick={onClick}
@@ -39,7 +39,7 @@ function NavItem({ label, icon, active, onClick, badge, dot }: any) {
       }}>
       <span style={{ fontSize: 15, width: 20, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
       <span style={{ flex: 1 }}>{label}</span>
-      {badge ? <span style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', fontSize: 10, padding: '2px 7px', borderRadius: 20, fontWeight: 500 }}>{badge}</span> : null}
+      {badge ? <span title={badgeTitle} style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', fontSize: 10, padding: '2px 7px', borderRadius: 20, fontWeight: 500, cursor: 'default' }}>{badge}</span> : null}
       {dot && !badge ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#639922', flexShrink: 0 }} /> : null}
     </div>
   );
@@ -348,13 +348,20 @@ export default function App() {
             } catch (e: any) { addToast(`❌ ${e.message}`); }
           }} />;
       case 'vendas':
-        return <Vendas vendas={vendas} userRole={user.role}
+        return <Vendas vendas={vendas} clientes={clientes} userRole={user.role}
           detalheInicial={vendaAbrirId}
           onSalvar={async v => {
             try {
               const salva = await vendasApi.atualizar(v.id, v);
               setVendas(p => { const i = p.findIndex(x => x.id === salva.id); if (i >= 0) { const n = [...p]; n[i] = normalizeVenda(salva); return n; } return [normalizeVenda(salva), ...p]; });
             } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onCriarDireta={async data => {
+            try {
+              const nova = await vendasApi.criar({ orcamentoId: undefined, orcamentoNumero: '', clienteNome: data.clienteNome, contato: data.contato, desconto: data.desconto, impostos: data.impostos, subtotal: data.subtotal, total: data.total, observacoes: data.observacoes, criadoEm: format(new Date(), 'yyyy-MM-dd') });
+              setVendas(v => [normalizeVenda(nova), ...v]);
+              addToast(`✅ Venda ${nova.numero} criada!`);
+            } catch (e: any) { addToast(`❌ ${e.message}`); throw e; }
           }}
           onDelete={async id => {
             try {
@@ -368,8 +375,24 @@ export default function App() {
         return <OrdemServicoComp ordens={ordens} userRole={user.role}
           onSalvar={async os => {
             try {
+              const osAntiga = ordens.find(x => x.id === os.id);
               const salvo = await ordensApi.atualizar(os.id, os);
-              setOrdens(p => { const i = p.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...p]; n[i] = normalizeOS(salvo); return n; } return [normalizeOS(salvo), ...p]; });
+              const osNorm = normalizeOS(salvo);
+              setOrdens(p => { const i = p.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...p]; n[i] = osNorm; return n; } return [osNorm, ...p]; });
+              if (os.dataMontagem && !osAntiga?.dataMontagem) {
+                try {
+                  const ev = await eventosApi.criar({ titulo: `Montagem – ${osNorm.clienteNome} (${osNorm.numero})`, data: os.dataMontagem, horaInicio: os.horarioInicio || '', horaFim: os.horarioFim || '', tipo: 'entrega', descricao: os.enderecoEvento || '', concluido: false });
+                  setEventos(p => [...p, ev]);
+                  addToast(`📅 Evento de montagem criado na agenda.`);
+                } catch {}
+              }
+              if (os.dataRetirada && !osAntiga?.dataRetirada) {
+                try {
+                  const ev = await eventosApi.criar({ titulo: `Retirada – ${osNorm.clienteNome} (${osNorm.numero})`, data: os.dataRetirada, horaInicio: '', horaFim: '', tipo: 'entrega', descricao: '', concluido: false });
+                  setEventos(p => [...p, ev]);
+                  addToast(`📅 Evento de retirada criado na agenda.`);
+                } catch {}
+              }
             } catch (e: any) { addToast(`❌ ${e.message}`); }
           }}
           onDelete={async id => {
@@ -409,10 +432,10 @@ export default function App() {
         <div style={{ padding: '12px 10px 4px', flex: 1, overflowY: 'auto' }}>
           <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '6px 8px 4px' }}>COMERCIAL</div>
           <NavItem label="Dashboard" icon="⊞" active={section === 'dashboard'} onClick={() => navTo('dashboard')} />
-          <NavItem label="Orçamentos" icon="📄" active={section === 'orcamentos' || section === 'novo-orcamento'} onClick={() => navTo('orcamentos')} badge={pendOrc || undefined} />
-          <NavItem label="Vendas" icon="💰" active={section === 'vendas'} onClick={() => navTo('vendas')} badge={pendVendas || undefined} />
+          <NavItem label="Orçamentos" icon="📄" active={section === 'orcamentos' || section === 'novo-orcamento'} onClick={() => navTo('orcamentos')} badge={pendOrc || undefined} badgeTitle={`${pendOrc} orçamento(s) aguardando resposta`} />
+          <NavItem label="Vendas" icon="💰" active={section === 'vendas'} onClick={() => navTo('vendas')} badge={pendVendas || undefined} badgeTitle={`${pendVendas} venda(s) com pagamento pendente ou parcial`} />
           <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>OPERAÇÃO</div>
-          <NavItem label="Ordens de Serviço" icon="🔧" active={section === 'ordens-servico'} onClick={() => navTo('ordens-servico')} badge={pendOS || undefined} />
+          <NavItem label="Ordens de Serviço" icon="🔧" active={section === 'ordens-servico'} onClick={() => navTo('ordens-servico')} badge={pendOS || undefined} badgeTitle={`${pendOS} OS pendente(s) ou em andamento`} />
           <NavItem label="Agenda" icon="📅" active={section === 'agenda'} onClick={() => navTo('agenda')} dot />
           <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>CADASTROS</div>
           <NavItem label="Clientes" icon="👥" active={section === 'clientes'} onClick={() => navTo('clientes')} />

@@ -70,7 +70,7 @@ function ProdutoSearch({ produtos, onSelect }: { produtos: Produto[]; onSelect: 
   const ativos = produtos.filter(p => p.ativo);
   const filtered = query
     ? ativos.filter(p => p.nome.toLowerCase().includes(query.toLowerCase()) || p.categoria.toLowerCase().includes(query.toLowerCase()))
-    : ativos;
+    : [];
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -84,7 +84,7 @@ function ProdutoSearch({ produtos, onSelect }: { produtos: Produto[]; onSelect: 
     <div ref={ref} style={{ position:'relative' }}>
       <input
         value={query}
-        onChange={e => setQuery(e.target.value)}
+        onChange={e => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
         placeholder="Buscar no catálogo..."
         style={{ padding:'7px 10px', border:'1px solid var(--border)', borderRadius:9, fontSize:12.5, fontFamily:"'Inter',sans-serif", color:'var(--text2)', background:'var(--surface)', cursor:'text', outline:'none', width:200 }}
@@ -219,7 +219,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
                 <ClienteSearch
                   clientes={clientes}
                   value={clienteId}
-                  onChange={id => { setClienteId(id); const c = clientes.find(x => x.id === id); if (c) setContato(c.nome); }}
+                  onChange={id => { setClienteId(id); }}
                 />
               </div>
               <button
@@ -244,6 +244,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
               <option value="aguardando">Aguardando resposta</option>
               <option value="aprovado">Aprovado</option>
               <option value="recusado">Recusado</option>
+              <option value="cancelado">Cancelado</option>
             </Select>
           </FormField>
         </div>
@@ -272,7 +273,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         </div>
 
         <div style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 0.8fr 0.8fr 36px',gap:8,padding:'8px 12px',background:'var(--surface2)',borderRadius:'9px 9px 0 0',fontSize:11,color:'var(--text3)',fontWeight:500,letterSpacing:'0.5px' }}>
-          <span>DESCRIÇÃO</span><span>QUANTIDADE</span><span>VL. UNITÁRIO</span><span>DETALHE DO ITEM</span><span style={{textAlign:'right'}}>TOTAL</span><span></span>
+          <span>DESCRIÇÃO</span><span>QUANTIDADE</span><span>VL. UNITÁRIO</span><span title="Ex: 3 dias, 1 semana, 2 turnos">PERÍODO</span><span style={{textAlign:'right'}}>TOTAL</span><span></span>
         </div>
         <div style={{ border:'1px solid var(--border)',borderTop:'none',borderRadius:'0 0 9px 9px',overflow:'hidden' }}>
           {itens.map((item, idx) => (

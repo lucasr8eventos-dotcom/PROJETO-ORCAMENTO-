@@ -45,7 +45,7 @@ const lineItemSchema = z.object({
   periodo: z.string().nullable().optional(),
 });
 
-const STATUS_ORC = ['rascunho', 'enviado', 'aguardando', 'aprovado', 'recusado'] as const;
+const STATUS_ORC = ['rascunho', 'enviado', 'aguardando', 'aprovado', 'recusado', 'cancelado'] as const;
 
 export const orcamentoSchema = z.object({
   clienteId: z.string().min(1, 'Cliente obrigatório'),

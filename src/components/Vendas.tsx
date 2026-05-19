@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Venda, PagamentoVenda, SituacaoVenda } from '../types';
-import { fmtMoeda } from './ui';
+import { Venda, PagamentoVenda, SituacaoVenda, LineItem, Cliente } from '../types';
+import { fmtMoeda, CurrencyInput } from './ui';
 import { calcularSituacaoVenda } from '../data';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -9,8 +9,10 @@ import Relatorio from './Relatorio';
 
 interface Props {
   vendas: Venda[];
+  clientes?: Cliente[];
   userRole: 'admin' | 'operacional';
   onSalvar: (v: Venda) => void | Promise<void>;
+  onCriarDireta?: (data: { clienteNome: string; contato: string; subtotal: number; total: number; desconto: number; impostos: number; observacoes: string; itens: LineItem[] }) => Promise<void>;
   onDelete: (id: string) => void;
   onVerOS: (vendaId: string) => void;
   detalheInicial?: string | null;
@@ -33,7 +35,9 @@ function badgeSituacao(s: SituacaoVenda) {
 
 const hoje = () => format(new Date(), 'yyyy-MM-dd');
 
-export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS, detalheInicial }: Props) {
+function newItemLine(): LineItem { return { id: uuid(), descricao: '', quantidade: 1, valorUnitario: 0, periodo: '' }; }
+
+export default function Vendas({ vendas, clientes, userRole, onSalvar, onCriarDireta, onDelete, onVerOS, detalheInicial }: Props) {
   const isAdmin = userRole === 'admin';
   const [filtro, setFiltro] = useState<SituacaoVenda | 'todos'>('todos');
   const [busca, setBusca] = useState('');
@@ -47,6 +51,10 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS, 
   const [editVendaId, setEditVendaId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ contato: string; observacoes: string }>({ contato: '', observacoes: '' });
   const [showRelatorio, setShowRelatorio] = useState(false);
+  const [showNovaVenda, setShowNovaVenda] = useState(false);
+  const [novaVendaForm, setNovaVendaForm] = useState({ clienteNome: '', contato: '', desconto: 0, impostos: 0, observacoes: '' });
+  const [novaVendaItens, setNovaVendaItens] = useState<LineItem[]>([newItemLine()]);
+  const [salvandoNovaVenda, setSalvandoNovaVenda] = useState(false);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -130,6 +138,12 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS, 
           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", color: 'var(--text)', whiteSpace: 'nowrap' }}>
           📊 Relatório
         </button>
+        {onCriarDireta && (
+          <button onClick={() => { setNovaVendaForm({ clienteNome: '', contato: '', desconto: 0, impostos: 0, observacoes: '' }); setNovaVendaItens([newItemLine()]); setShowNovaVenda(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 10, background: 'var(--text)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}>
+            + Nova Venda
+          </button>
+        )}
       </div>
 
       {/* Cards */}
@@ -268,7 +282,10 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS, 
             <div style={{ padding: '18px 24px' }}>
               {/* Itens */}
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.8px', marginBottom: 10 }}>ITENS CONTRATADOS</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.8px' }}>ITENS CONTRATADOS</div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>Valores do orçamento na data de aprovação</div>
+                </div>
                 <div style={{ background: 'var(--bg)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
                   {detalhe.itens.map((item, i) => (
                     <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: i < detalhe.itens.length - 1 ? '1px solid var(--border)' : 'none' }}>
@@ -441,6 +458,105 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS, 
           </div>
         </div>
       )}
+
+      {/* Modal Nova Venda Direta */}
+      {showNovaVenda && (() => {
+        const round2 = (n: number) => Math.round(n * 100) / 100;
+        const subtotalNV = round2(novaVendaItens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0));
+        const descontoValNV = round2(subtotalNV * novaVendaForm.desconto / 100);
+        const impostosValNV = round2((subtotalNV - descontoValNV) * novaVendaForm.impostos / 100);
+        const totalNV = round2(subtotalNV - descontoValNV + impostosValNV);
+
+        const salvarNovaVenda = async () => {
+          if (!novaVendaForm.clienteNome.trim()) return alert('Informe o nome do cliente.');
+          const itensFiltrados = novaVendaItens.filter(i => i.descricao.trim() !== '');
+          if (itensFiltrados.length === 0) return alert('Adicione ao menos um item.');
+          setSalvandoNovaVenda(true);
+          try {
+            await onCriarDireta!({ ...novaVendaForm, subtotal: subtotalNV, total: totalNV, itens: itensFiltrados });
+            setShowNovaVenda(false);
+          } finally { setSalvandoNovaVenda(false); }
+        };
+
+        const inp2: React.CSSProperties = { width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontFamily: "'Inter',sans-serif", outline: 'none', boxSizing: 'border-box' };
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={e => { if (e.target === e.currentTarget) setShowNovaVenda(false); }}>
+            <div style={{ background: 'var(--surface)', borderRadius: 16, width: '100%', maxWidth: 640, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+              <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18 }}>Nova Venda Direta</div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Venda sem orçamento vinculado</div>
+                </div>
+                <button onClick={() => setShowNovaVenda(false)} style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+              </div>
+              <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Cliente e contato */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5, letterSpacing: '0.4px' }}>CLIENTE *</div>
+                    <input value={novaVendaForm.clienteNome} onChange={e => setNovaVendaForm(f => ({ ...f, clienteNome: e.target.value }))} placeholder="Nome do cliente" style={inp2} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5, letterSpacing: '0.4px' }}>CONTATO</div>
+                    <input value={novaVendaForm.contato} onChange={e => setNovaVendaForm(f => ({ ...f, contato: e.target.value }))} placeholder="Nome do contato" style={inp2} />
+                  </div>
+                </div>
+
+                {/* Itens */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.4px' }}>ITENS *</div>
+                    <button onClick={() => setNovaVendaItens(p => [...p, newItemLine()])} style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text2)' }}>+ Item</button>
+                  </div>
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 9, overflow: 'hidden' }}>
+                    {novaVendaItens.map((item, idx) => (
+                      <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 60px 1fr 28px', gap: 6, padding: '8px 10px', borderBottom: idx < novaVendaItens.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                        <input value={item.descricao} onChange={e => setNovaVendaItens(p => p.map(i => i.id === item.id ? { ...i, descricao: e.target.value } : i))} placeholder="Descrição..." style={{ ...inp2, padding: '6px 8px' }} />
+                        <input inputMode="numeric" value={String(item.quantidade)} onChange={e => { const v = e.target.value.replace(/\D/g, ''); setNovaVendaItens(p => p.map(i => i.id === item.id ? { ...i, quantidade: parseInt(v || '1', 10) || 1 } : i)); }} style={{ ...inp2, padding: '6px 8px', textAlign: 'center' }} />
+                        <CurrencyInput value={item.valorUnitario} onChange={v => setNovaVendaItens(p => p.map(i => i.id === item.id ? { ...i, valorUnitario: v } : i))} />
+                        <button onClick={() => { if (novaVendaItens.length > 1) setNovaVendaItens(p => p.filter(i => i.id !== item.id)); }} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desconto / impostos */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>DESCONTO (%)</div>
+                    <input inputMode="decimal" value={novaVendaForm.desconto === 0 ? '' : String(novaVendaForm.desconto)} onChange={e => setNovaVendaForm(f => ({ ...f, desconto: parseFloat(e.target.value.replace(',', '.')) || 0 }))} placeholder="0" style={inp2} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>IMPOSTOS (%)</div>
+                    <input inputMode="decimal" value={novaVendaForm.impostos === 0 ? '' : String(novaVendaForm.impostos)} onChange={e => setNovaVendaForm(f => ({ ...f, impostos: parseFloat(e.target.value.replace(',', '.')) || 0 }))} placeholder="0" style={inp2} />
+                  </div>
+                </div>
+
+                {/* Observações */}
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 5 }}>OBSERVAÇÕES</div>
+                  <textarea value={novaVendaForm.observacoes} onChange={e => setNovaVendaForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Condições de pagamento, anotações..." rows={3} style={{ ...inp2, resize: 'vertical', lineHeight: 1.6 }} />
+                </div>
+
+                {/* Resumo */}
+                <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'flex-end', gap: 24, fontSize: 13 }}>
+                  <span style={{ color: 'var(--text2)' }}>Subtotal: <strong style={{ color: 'var(--text)' }}>{fmtMoeda(subtotalNV)}</strong></span>
+                  {novaVendaForm.desconto > 0 && <span style={{ color: 'var(--text2)' }}>Desconto: <strong style={{ color: 'var(--red)' }}>- {fmtMoeda(descontoValNV)}</strong></span>}
+                  {novaVendaForm.impostos > 0 && <span style={{ color: 'var(--text2)' }}>Impostos: <strong>+ {fmtMoeda(impostosValNV)}</strong></span>}
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15 }}>Total: {fmtMoeda(totalNV)}</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button onClick={() => setShowNovaVenda(false)} style={{ padding: '9px 20px', borderRadius: 9, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--text2)' }}>Cancelar</button>
+                  <button onClick={salvarNovaVenda} disabled={salvandoNovaVenda} style={{ padding: '9px 20px', borderRadius: 9, border: 'none', background: 'var(--text)', color: '#fff', cursor: salvandoNovaVenda ? 'default' : 'pointer', fontSize: 13, fontWeight: 600, opacity: salvandoNovaVenda ? 0.7 : 1 }}>{salvandoNovaVenda ? 'Salvando...' : 'Criar Venda'}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {showRelatorio && (
         <Relatorio tipo="vendas" vendas={vendas} onFechar={() => setShowRelatorio(false)} />

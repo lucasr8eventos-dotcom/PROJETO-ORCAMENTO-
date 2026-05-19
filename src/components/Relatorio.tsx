@@ -24,7 +24,7 @@ const tituloTipo: Record<Tipo, string> = {
 
 const statusOrcLabel: Record<OrcamentoStatus, string> = {
   aprovado: 'Aprovado', enviado: 'Enviado', aguardando: 'Aguardando',
-  recusado: 'Recusado', rascunho: 'Rascunho',
+  recusado: 'Recusado', cancelado: 'Cancelado', rascunho: 'Rascunho',
 };
 
 const statusVendaLabel: Record<SituacaoVenda, string> = {

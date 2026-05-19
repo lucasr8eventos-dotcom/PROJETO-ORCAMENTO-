@@ -79,7 +79,11 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
                         {p.tipo === 'servico' ? 'Serviço' : 'Produto'}
                       </span>
                     </td>
-                    <td style={{ padding:'11px 16px',fontSize:13,fontWeight:600 }}>{fmtMoeda(p.preco)}</td>
+                    <td style={{ padding:'11px 16px',fontSize:13,fontWeight:600 }}>
+                      {p.preco === 0
+                        ? <span title="Preço não definido" style={{ color:'var(--amber)',display:'inline-flex',alignItems:'center',gap:4 }}>⚠️ {fmtMoeda(p.preco)}</span>
+                        : fmtMoeda(p.preco)}
+                    </td>
                     <td style={{ padding:'11px 16px',fontSize:12.5,color:'var(--text2)' }}>/{p.unidade}</td>
                     <td style={{ padding:'11px 16px',fontSize:13 }}>{p.estoque !== null ? `${p.estoque} unid.` : '—'}</td>
                     <td style={{ padding:'11px 16px' }}>

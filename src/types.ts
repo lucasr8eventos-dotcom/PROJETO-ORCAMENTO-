@@ -1,4 +1,4 @@
-export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'aguardando';
+export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'aguardando' | 'cancelado';
 
 export interface Usuario {
   id: string;

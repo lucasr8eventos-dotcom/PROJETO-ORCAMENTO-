@@ -116,8 +116,8 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
           <div style={{ fontSize:12,color:'var(--text3)',marginBottom:6 }}>Recusados ({totalRecusados})</div>
           <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:20,fontWeight:700,color:'var(--red)' }}>{fmtMoeda(valorRecusados)}</div>
         </button>
-        <button style={cardAtivo('previstos')} onClick={()=>setFiltroCard(filtroCard==='previstos'?'todos':'previstos')}>
-          <div style={{ fontSize:12,color:'var(--text3)',marginBottom:6 }}>Previstos ({totalPrevistos})</div>
+        <button style={cardAtivo('previstos')} onClick={()=>setFiltroCard(filtroCard==='previstos'?'todos':'previstos')} title="Orçamentos em Rascunho, Enviados ou Aguardando resposta — receita potencial ainda não confirmada">
+          <div style={{ fontSize:12,color:'var(--text3)',marginBottom:6 }}>Previstos ({totalPrevistos}) <span style={{ fontSize:10,opacity:0.6 }}>ℹ</span></div>
           <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:20,fontWeight:700,color:'var(--amber)' }}>{fmtMoeda(valorPrevistos)}</div>
         </button>
         <button style={cardAtivo('aprovado')} onClick={()=>setFiltroCard(filtroCard==='aprovado'?'todos':'aprovado')}>
@@ -243,12 +243,12 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
           <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />
           <div style={{ position:'fixed',top:menuPos.top,right:menuPos.right,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:200,boxShadow:'0 4px 20px rgba(0,0,0,0.12)' }}>
             <div style={{ padding:'6px 12px 4px',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.5px' }}>ALTERAR STATUS</div>
-            {(['enviado','aprovado','aguardando','recusado','rascunho'] as OrcamentoStatus[]).map(s=>(
+            {(['enviado','aprovado','aguardando','recusado','rascunho','cancelado'] as OrcamentoStatus[]).map(s=>(
               <button key={s} onClick={()=>{const o=orcamentos.find(x=>x.id===menuOpen);if(o)onStatusChange(o.id,s);setMenuOpen(null);}}
-                style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
+                style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color: s==='cancelado' ? 'var(--red)' : 'var(--text)' }}
                 onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
                 onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-                {s === 'aguardando' ? 'Aguardando' : s === 'enviado' ? 'Enviado' : s === 'aprovado' ? 'Aprovado' : s === 'recusado' ? 'Recusado' : 'Rascunho'}
+                {s === 'aguardando' ? 'Aguardando' : s === 'enviado' ? 'Enviado' : s === 'aprovado' ? 'Aprovado' : s === 'recusado' ? 'Recusado' : s === 'cancelado' ? 'Cancelado' : 'Rascunho'}
               </button>
             ))}
             <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
