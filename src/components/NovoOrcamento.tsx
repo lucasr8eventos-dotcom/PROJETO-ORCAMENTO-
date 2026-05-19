@@ -158,14 +158,19 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
   const handleSalvar = (novoStatus?: OrcamentoStatus) => {
     if (!clienteId) { alert('Selecione um cliente.'); return; }
+    const itensFiltrados = itens.filter(i => i.descricao.trim() !== '');
+    if (itensFiltrados.length === 0) { alert('Adicione ao menos um item ao orçamento.'); return; }
+    // Impede regressão de status: aprovado/recusado não volta para enviado
+    const statusFinal = (novoStatus && status !== 'aprovado' && status !== 'recusado')
+      ? novoStatus : status;
     const orc: Orcamento = {
       id: orcamento?.id || uuid(),
       numero: orcamento?.numero || proximoNumero,
       clienteId,
       clienteNome: clienteSelecionado?.nome || '',
       contato,
-      status: novoStatus || status,
-      itens,
+      status: statusFinal,
+      itens: itensFiltrados,
       desconto,
       impostos,
       observacoes,
@@ -198,7 +203,9 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         <StatusBadge status={status} />
         <div style={{ marginLeft:'auto',display:'flex',gap:8,flexWrap:'wrap' }}>
           {orcamento && <Btn onClick={async ()=>{ const b64 = gerarPDF(orcamento, loadConfig(), clientes.find(c=>c.id===orcamento.clienteId)); if(b64) try { await pdfsApi.uploadBase64(orcamento.id, orcamento.numero, b64); } catch {} }} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>}>PDF</Btn>}
-          <Btn onClick={()=>handleSalvar('enviado')} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>}>Enviar</Btn>
+          {status !== 'aprovado' && status !== 'recusado' && (
+            <Btn onClick={()=>handleSalvar('enviado')} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>}>Enviar</Btn>
+          )}
           <Btn variant="primary" onClick={()=>handleSalvar()}>Salvar orçamento</Btn>
         </div>
       </div>
@@ -255,7 +262,10 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <div style={{ display:'flex',gap:8 }}>
             <ProdutoSearch
               produtos={produtos}
-              onSelect={p => setItens(prev => [...prev, { id: uuid(), descricao: p.nome, quantidade: 1, valorUnitario: p.preco, periodo: '' }])}
+              onSelect={p => setItens(prev => {
+                const semVazios = prev.filter(i => i.descricao.trim() !== '' || i.valorUnitario > 0);
+                return [...semVazios, { id: uuid(), descricao: p.nome, quantidade: 1, valorUnitario: p.preco, periodo: '' }];
+              })}
             />
             <Btn size="sm" onClick={()=>setItens(p=>[...p,newLine()])} icon={<span>+</span>}>Item manual</Btn>
           </div>

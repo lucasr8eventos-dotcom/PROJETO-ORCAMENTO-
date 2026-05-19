@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Venda, PagamentoVenda, SituacaoVenda } from '../types';
 import { fmtMoeda } from './ui';
 import { calcularSituacaoVenda } from '../data';
@@ -13,6 +13,7 @@ interface Props {
   onSalvar: (v: Venda) => void | Promise<void>;
   onDelete: (id: string) => void;
   onVerOS: (vendaId: string) => void;
+  detalheInicial?: string | null;
 }
 
 function badgeSituacao(s: SituacaoVenda) {
@@ -32,11 +33,12 @@ function badgeSituacao(s: SituacaoVenda) {
 
 const hoje = () => format(new Date(), 'yyyy-MM-dd');
 
-export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }: Props) {
+export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS, detalheInicial }: Props) {
   const isAdmin = userRole === 'admin';
   const [filtro, setFiltro] = useState<SituacaoVenda | 'todos'>('todos');
   const [busca, setBusca] = useState('');
-  const [detalheId, setDetalheId] = useState<string | null>(null);
+  const [detalheId, setDetalheId] = useState<string | null>(detalheInicial ?? null);
+  useEffect(() => { if (detalheInicial) setDetalheId(detalheInicial); }, [detalheInicial]);
   const [editPag, setEditPag] = useState<Partial<PagamentoVenda>>({});
   const [showAddPag, setShowAddPag] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -364,7 +366,7 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
               {detalhe.observacoes && (
                 <div style={{ marginTop: 18, padding: '12px 14px', background: 'var(--bg)', borderRadius: 10, border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>OBSERVAÇÕES</div>
-                  <div style={{ fontSize: 13, color: 'var(--text2)' }}>{detalhe.observacoes}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{detalhe.observacoes}</div>
                 </div>
               )}
 

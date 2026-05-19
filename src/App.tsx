@@ -67,6 +67,8 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [busca, setBusca] = useState('');
   const [filtroOsVendaId, setFiltroOsVendaId] = useState<string | null>(null);
+  const [vendaAbrirId, setVendaAbrirId] = useState<string | null>(null);
+  const [pendingAprovacaoOrc, setPendingAprovacaoOrc] = useState<Orcamento | null>(null);
   const [toasts, setToasts] = useState<{ id: string; msg: string }[]>([]);
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
@@ -173,7 +175,9 @@ export default function App() {
         if (i >= 0) { const n = [...p]; n[i] = orcSalvo; return n; }
         return [orcSalvo, ...p];
       });
-      if (orcSalvo.status === 'aprovado') await criarVendaEOS(orcSalvo);
+      if (orcSalvo.status === 'aprovado' && !vendas.some(v => v.orcamentoId === orcSalvo.id)) {
+        setPendingAprovacaoOrc(orcSalvo);
+      }
       navTo('orcamentos');
     } catch (e: any) { addToast(`❌ Erro ao salvar orçamento: ${e.message}`); }
   };
@@ -183,9 +187,8 @@ export default function App() {
       const salvo = await orcamentosApi.status(id, status);
       const orcAtualizado = normalizeOrc(salvo);
       setOrcamentos(p => p.map(o => o.id === id ? orcAtualizado : o));
-      if (status === 'aprovado') {
-        await criarVendaEOS(orcAtualizado);
-        addToast(`✅ ${orcAtualizado.numero} aprovado! Venda e OS criadas automaticamente.`);
+      if (status === 'aprovado' && !vendas.some(v => v.orcamentoId === orcAtualizado.id)) {
+        setPendingAprovacaoOrc(orcAtualizado);
       }
     } catch (e: any) { addToast(`❌ Erro ao atualizar status: ${e.message}`); }
   };
@@ -269,7 +272,7 @@ export default function App() {
       case 'dashboard':
         return <Dashboard orcamentos={orcamentos} onVerOrcamentos={() => navTo('orcamentos')} onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }} />;
       case 'orcamentos':
-        return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} vendas={vendas}
+        return <Orcamentos orcamentos={orcamentos} clientes={clientes} vendas={vendas}
           onNovo={() => { setEditOrc(null); navTo('novo-orcamento'); }}
           onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }}
           onDelete={async id => {
@@ -277,7 +280,9 @@ export default function App() {
             catch (e: any) { addToast(`❌ ${e.message}`); }
           }}
           onStatusChange={handleStatusChange}
-          onDuplicar={duplicarOrc} />;
+          onDuplicar={duplicarOrc}
+          onVerVenda={id => { setVendaAbrirId(id); navTo('vendas'); }}
+          onToast={addToast} />;
       case 'novo-orcamento':
         return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos}
           proximoNumero={proximoNumero} onSalvar={saveOrc}
@@ -344,6 +349,7 @@ export default function App() {
           }} />;
       case 'vendas':
         return <Vendas vendas={vendas} userRole={user.role}
+          detalheInicial={vendaAbrirId}
           onSalvar={async v => {
             try {
               const salva = await vendasApi.atualizar(v.id, v);
@@ -449,7 +455,7 @@ export default function App() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {!isMobile && (
+            {!isMobile && (section === 'clientes' || section === 'produtos') && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input placeholder={`Buscar em ${pageTitles[section].toLowerCase()}...`} value={busca} onChange={e => setBusca(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 13, fontFamily: "'Inter',sans-serif", color: 'var(--text)', background: 'transparent', width: 180 }} />
@@ -457,7 +463,7 @@ export default function App() {
               </div>
             )}
             <div style={{ width: 36, height: 36, borderRadius: 9, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', fontSize: 16 }}>🔔</div>
-            {section !== 'vendas' && section !== 'ordens-servico' && (
+            {section === 'dashboard' && (
               <button onClick={() => { setEditOrc(null); navTo('novo-orcamento'); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 10, background: 'var(--text)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}>+ Novo orçamento</button>
             )}
           </div>
@@ -472,6 +478,28 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* Confirmação: gerar Venda + OS ao aprovar orçamento */}
+      {pendingAprovacaoOrc && (
+        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center',padding:16 }}>
+          <div style={{ background:'var(--surface)',borderRadius:16,padding:32,maxWidth:420,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.3)',textAlign:'center' }}>
+            <div style={{ fontSize:40,marginBottom:14 }}>✅</div>
+            <div style={{ fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,marginBottom:8 }}>Orçamento aprovado!</div>
+            <div style={{ fontSize:14,color:'var(--text2)',marginBottom:6 }}>{pendingAprovacaoOrc.numero} · {pendingAprovacaoOrc.clienteNome}</div>
+            <div style={{ fontSize:13,color:'var(--text3)',marginBottom:28 }}>Deseja gerar a Venda e Ordem de Serviço automaticamente?</div>
+            <div style={{ display:'flex',gap:10,justifyContent:'center' }}>
+              <button onClick={() => setPendingAprovacaoOrc(null)}
+                style={{ padding:'10px 22px',borderRadius:10,border:'1px solid var(--border)',background:'none',cursor:'pointer',fontSize:13,color:'var(--text)' }}>
+                Não, só alterar status
+              </button>
+              <button onClick={async () => { const orc = pendingAprovacaoOrc; setPendingAprovacaoOrc(null); await criarVendaEOS(orc); }}
+                style={{ padding:'10px 22px',borderRadius:10,border:'none',background:'var(--text)',color:'#fff',cursor:'pointer',fontSize:13,fontWeight:600 }}>
+                ✅ Gerar Venda e OS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeInUp {

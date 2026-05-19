@@ -48,7 +48,7 @@ router.post('/', validar(vendaSchema), asyncHandler(async (req: AuthRequest, res
           criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
           situacao: 'pendente',
         },
-        include: { pagamentos: true },
+        include: { pagamentos: true, orcamento: { include: { itens: true } } },
       });
       res.status(201).json(v);
       return;
@@ -76,7 +76,7 @@ router.put('/:id', validar(vendaUpdateSchema), asyncHandler(async (req: AuthRequ
             pagoEm: p.pagoEm ?? null,
           })) },
         },
-        include: { pagamentos: true },
+        include: { pagamentos: true, orcamento: { include: { itens: true } } },
       });
     });
     res.json(v);

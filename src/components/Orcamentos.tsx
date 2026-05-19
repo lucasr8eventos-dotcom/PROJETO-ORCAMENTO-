@@ -17,13 +17,15 @@ interface Props {
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: OrcamentoStatus) => void;
   onDuplicar: (o: Orcamento) => void;
+  onVerVenda?: (vendaId: string) => void;
+  onToast?: (msg: string) => void;
 }
 
 type FiltroCard = 'todos' | 'previstos' | 'aprovado' | 'recusado';
 
 const isPrevistos = (s: OrcamentoStatus) => s === 'aguardando' || s === 'enviado' || s === 'rascunho';
 
-export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEditar, onDelete, onStatusChange, onDuplicar }: Props) {
+export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEditar, onDelete, onStatusChange, onDuplicar, onVerVenda, onToast }: Props) {
   const [periodo, setPeriodo] = useState(startOfMonth(new Date()));
   const [busca, setBusca] = useState('');
   const [filtroCard, setFiltroCard] = useState<FiltroCard>('todos');
@@ -31,6 +33,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showRelatorio, setShowRelatorio] = useState(false);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -163,16 +166,35 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
                     <td style={{ padding:'12px 16px',cursor:'pointer' }} onClick={()=>onEditar(o)}>
                       <div style={{ display:'flex',alignItems:'center',gap:7 }}>
                         <StatusBadge status={o.status} />
-                        {vendas.some(v => v.orcamentoId === o.id) && (
-                          <span title="Venda gerada" style={{ fontSize:11,fontWeight:600,color:'var(--green)',background:'var(--green-bg)',padding:'2px 7px',borderRadius:20 }}>💰 Venda</span>
-                        )}
+                        {(() => { const v = vendas.find(x => x.orcamentoId === o.id); return v ? (
+                          <button
+                            title="Ver venda gerada"
+                            onClick={e => { e.stopPropagation(); onVerVenda?.(v.id); }}
+                            style={{ fontSize:11,fontWeight:600,color:'var(--green)',background:'var(--green-bg)',padding:'2px 7px',borderRadius:20,border:'none',cursor:'pointer' }}>
+                            💰 {v.numero}
+                          </button>
+                        ) : null; })()}
                       </div>
                     </td>
                     <td style={{ padding:'12px 16px' }}>
-                      <button onClick={async ()=>{ const b64 = gerarPDF(o, loadConfig(), clientes.find(c=>c.id===o.clienteId)); if(b64) try { await pdfsApi.uploadBase64(o.id, o.numero, b64); } catch {} }}
+                      <button
+                        onClick={async e => {
+                          e.stopPropagation();
+                          setPdfLoadingId(o.id);
+                          try {
+                            const b64 = gerarPDF(o, loadConfig(), clientes.find(c=>c.id===o.clienteId));
+                            if (b64) {
+                              try { await pdfsApi.uploadBase64(o.id, o.numero, b64); } catch {}
+                              onToast?.(`✅ PDF ${o.numero} gerado!`);
+                            }
+                          } finally { setPdfLoadingId(null); }
+                        }}
+                        disabled={pdfLoadingId === o.id}
                         title="Gerar PDF"
-                        style={{ width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+                        style={{ width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color: pdfLoadingId===o.id ? 'var(--text3)' : 'var(--text2)',opacity: pdfLoadingId===o.id ? 0.5 : 1 }}>
+                        {pdfLoadingId === o.id
+                          ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeDasharray="28" strokeDashoffset="28"><animate attributeName="stroke-dashoffset" values="28;0" dur="0.8s" repeatCount="indefinite"/></path></svg>
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>}
                       </button>
                     </td>
                     <td style={{ padding:'12px 16px' }}>
