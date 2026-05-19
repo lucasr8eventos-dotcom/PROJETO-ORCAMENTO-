@@ -34,6 +34,8 @@ app.use(helmet({
 }));
 
 // CORS de fallback (caso o frontend seja acessado em domínio diferente do backend).
+// Quando frontend e backend estão na mesma origem, esses headers são ignorados pelo browser.
+// Implementação manual para garantir 100% de compatibilidade com preflight de qualquer ambiente.
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin) {
@@ -49,7 +51,7 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   next();
 });
-app.use(cors());
+app.use(cors()); // backup adicional
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -110,8 +112,13 @@ if (FRONTEND_BUILD) {
   });
 } else {
   console.warn('✗ AVISO: build do frontend não encontrado. Acesse /api/debug/paths para diagnóstico.');
+  // Fallback: rota raiz mostra info útil em vez de "Cannot GET /"
   app.get('/', (_req, res) => {
-    res.status(503).send('<h1>OpSuite Backend</h1><p>API ativa mas frontend não encontrado. Acesse <a href="/api/debug/paths">/api/debug/paths</a> para diagnóstico.</p><p>Endpoints: /api/health, /api/auth/login, etc.</p>');
+    res.status(503).send(`
+      <h1>OpSuite Backend</h1>
+      <p>API ativa mas frontend não encontrado. Acesse <a href="/api/debug/paths">/api/debug/paths</a> para diagnóstico.</p>
+      <p>Endpoints: /api/health, /api/auth/login, etc.</p>
+    `);
   });
 }
 

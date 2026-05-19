@@ -55,6 +55,9 @@ function normalizeOS(o: any): OrdemServico {
   return { ...o, itens: o.itens || [] };
 }
 
+const BUILD_TAG = 'v2-monoorigem-2026-05-18';
+if (typeof window !== 'undefined') console.log('OpSuite build:', BUILD_TAG);
+
 export default function App() {
   const [user, setUser] = useState<Usuario | null>(null);
   const [appReady, setAppReady] = useState(false);
