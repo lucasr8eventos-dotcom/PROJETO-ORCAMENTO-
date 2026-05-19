@@ -18,9 +18,9 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', validar(clienteSchema), asyncHandler(async (req: AuthRequest, res) => {
-  const { nome, email, telefone, empresa, cnpj, cpf, endereco, criadoEm } = req.body;
+  const { id, nome, email, telefone, empresa, cnpj, cpf, endereco, criadoEm } = req.body;
   const c = await prisma.cliente.create({
-    data: { nome, email, telefone, empresa, cnpj, cpf, endereco,
+    data: { ...(id ? { id } : {}), nome, email, telefone, empresa, cnpj, cpf, endereco,
             criadoEm: criadoEm || new Date().toISOString().slice(0, 10) },
   });
   res.status(201).json(c);

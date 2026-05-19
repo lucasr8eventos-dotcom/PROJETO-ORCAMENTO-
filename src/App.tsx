@@ -5,7 +5,7 @@ import cfg from './config';
 import { Section, Orcamento, Cliente, Produto, Evento, Usuario, Venda, OrdemServico } from './types';
 import { calcularTotais } from './data';
 import {
-  clientesApi, produtosApi, orcamentosApi,
+  authApi, clientesApi, produtosApi, orcamentosApi,
   vendasApi, ordensApi, eventosApi, usuariosApi,
 } from './api';
 import Login from './components/Login';
@@ -104,12 +104,21 @@ export default function App() {
     ).catch(() => {});
   }, []);
 
-  // Limpa qualquer sessão anterior e exige login a cada acesso
+  // Restaura sessão a partir do token salvo; só mostra login se token ausente ou expirado
   useEffect(() => {
-    localStorage.removeItem(cfg.tokenKey);
-    localStorage.removeItem('opsuite_token');
-    setAppReady(true);
-  }, []);
+    const stored = localStorage.getItem(cfg.tokenKey);
+    if (!stored) { setAppReady(true); return; }
+    authApi.me()
+      .then(async u => {
+        setUser({ id: u.id, nome: u.nome, email: u.email, role: u.role as any, ativo: u.ativo, senha: '', criadoEm: '' });
+        try { await carregarDados(); } catch {}
+        setAppReady(true);
+      })
+      .catch(() => {
+        localStorage.removeItem(cfg.tokenKey);
+        setAppReady(true);
+      });
+  }, [carregarDados]);
 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth <= 900);
