@@ -72,18 +72,20 @@ router.put('/:id', validar(orcamentoSchema), asyncHandler(async (req: AuthReques
           observacoes, validade } = req.body;
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
   try {
-    await prisma.orcamentoItem.deleteMany({ where: { orcamentoId: req.params.id } });
-    const o = await prisma.orcamento.update({
-      where: { id: req.params.id },
-      data: {
-        clienteId, clienteNome, contato, status, desconto, impostos,
-        observacoes, validade, subtotal, total,
-        itens: { create: itens.map((i: any) => ({
-          descricao: i.descricao, quantidade: i.quantidade,
-          valorUnitario: i.valorUnitario, periodo: i.periodo || null,
-        })) },
-      },
-      include: { itens: true },
+    const o = await prisma.$transaction(async (tx) => {
+      await tx.orcamentoItem.deleteMany({ where: { orcamentoId: req.params.id } });
+      return tx.orcamento.update({
+        where: { id: req.params.id },
+        data: {
+          clienteId, clienteNome, contato, status, desconto, impostos,
+          observacoes, validade, subtotal, total,
+          itens: { create: itens.map((i: any) => ({
+            descricao: i.descricao, quantidade: i.quantidade,
+            valorUnitario: i.valorUnitario, periodo: i.periodo || null,
+          })) },
+        },
+        include: { itens: true },
+      });
     });
     res.json(o);
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }

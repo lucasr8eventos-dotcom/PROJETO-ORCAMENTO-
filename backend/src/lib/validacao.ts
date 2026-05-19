@@ -82,6 +82,7 @@ export const vendaUpdateSchema = z.object({
   contato: z.string().optional(),
   observacoes: z.string().optional(),
   situacao: z.enum(['pendente', 'parcial', 'quitado', 'cancelado']).optional(),
+  editavel: z.boolean().optional(),
   pagamentos: z.array(z.object({
     descricao: z.string().trim().min(1, 'Descrição obrigatória'),
     valor: z.coerce.number().min(0),

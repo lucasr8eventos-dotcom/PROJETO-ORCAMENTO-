@@ -36,15 +36,18 @@ app.use(helmet({
 // CORS de fallback (caso o frontend seja acessado em domínio diferente do backend).
 // Quando frontend e backend estão na mesma origem, esses headers são ignorados pelo browser.
 // Implementação manual para garantir 100% de compatibilidade com preflight de qualquer ambiente.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin) {
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.includes('*'))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
-  } else {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (!origin) {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Max-Age', '86400');
@@ -78,30 +81,29 @@ const candidatos = [
   '/app/build',
   '/app/backend/build',
 ];
-console.log('--- Procurando build do frontend ---');
-console.log(`__dirname: ${__dirname}`);
-console.log(`process.cwd(): ${process.cwd()}`);
-candidatos.forEach(p => {
-  const exists = fs.existsSync(path.join(p, 'index.html'));
-  console.log(`  ${exists ? '✓' : '✗'} ${p}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  console.log('--- Procurando build do frontend ---');
+  console.log(`__dirname: ${__dirname}`);
+  console.log(`process.cwd(): ${process.cwd()}`);
+  candidatos.forEach(p => {
+    const exists = fs.existsSync(path.join(p, 'index.html'));
+    console.log(`  ${exists ? '✓' : '✗'} ${p}`);
+  });
+}
 const FRONTEND_BUILD = candidatos.find(p => fs.existsSync(path.join(p, 'index.html')));
 
-// Endpoint de debug - sempre disponível
-app.get('/api/debug/paths', (_req, res) => {
-  res.json({
-    __dirname,
-    cwd: process.cwd(),
-    candidatos: candidatos.map(p => ({ path: p, exists: fs.existsSync(path.join(p, 'index.html')) })),
-    frontendBuild: FRONTEND_BUILD,
-    railwayEnv: {
-      RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT,
-      RAILWAY_PROJECT_NAME: process.env.RAILWAY_PROJECT_NAME,
-      RAILWAY_SERVICE_NAME: process.env.RAILWAY_SERVICE_NAME,
-      NODE_ENV: process.env.NODE_ENV,
-    },
+// Endpoint de debug - apenas em desenvolvimento
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/debug/paths', (_req, res) => {
+    res.json({
+      __dirname,
+      cwd: process.cwd(),
+      candidatos: candidatos.map(p => ({ path: p, exists: fs.existsSync(path.join(p, 'index.html')) })),
+      frontendBuild: FRONTEND_BUILD,
+      nodeEnv: process.env.NODE_ENV,
+    });
   });
-});
+}
 
 if (FRONTEND_BUILD) {
   console.log(`✓ Servindo frontend de: ${FRONTEND_BUILD}`);

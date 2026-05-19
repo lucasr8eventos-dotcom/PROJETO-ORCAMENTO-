@@ -1,11 +1,13 @@
-import { Router, Response } from 'express';
-import multer from 'multer';
+import { Router, Response, Request } from 'express';
+import multer, { StorageEngine } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../lib/prisma';
 import { autenticar, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, pdfBase64Schema } from '../lib/validacao';
+
+type MulterRequest = Request & { file?: Express.Multer.File };
 
 const router = Router();
 router.use(autenticar);
@@ -15,14 +17,14 @@ const uploadDir = process.env.UPLOAD_DIR
   : path.join(process.cwd(), 'uploads', 'pdfs');
 fs.mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, _file, cb) => cb(null, `${uuidv4()}.pdf`),
+const storage: StorageEngine = multer.diskStorage({
+  destination: (_req: Request, _file: Express.Multer.File, cb: (err: Error | null, dest: string) => void) => cb(null, uploadDir),
+  filename: (_req: Request, _file: Express.Multer.File, cb: (err: Error | null, name: string) => void) => cb(null, `${uuidv4()}.pdf`),
 });
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (file.mimetype === 'application/pdf') cb(null, true);
     else cb(new Error('Apenas arquivos PDF são permitidos'));
   },
@@ -58,7 +60,7 @@ router.get('/:id/download', asyncHandler(async (req, res) => {
   fs.createReadStream(filepath).pipe(res);
 }));
 
-router.post('/upload', upload.single('pdf'), asyncHandler(async (req: AuthRequest, res: Response) => {
+router.post('/upload', upload.single('pdf'), asyncHandler(async (req: AuthRequest & MulterRequest, res: Response) => {
   if (!req.file) { res.status(400).json({ erro: 'Arquivo PDF obrigatório' }); return; }
   const { orcamentoId, orcamentoNumero, versao } = req.body;
   if (!orcamentoId) { res.status(400).json({ erro: 'orcamentoId obrigatório' }); return; }

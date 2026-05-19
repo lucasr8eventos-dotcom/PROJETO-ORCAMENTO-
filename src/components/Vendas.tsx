@@ -81,7 +81,7 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
     const pagamentos = editPag.id
       ? detalhe.pagamentos.map(p => p.id === pag.id ? pag : p)
       : [...detalhe.pagamentos, pag];
-    const situacao = calcularSituacaoVenda(pagamentos);
+    const situacao = calcularSituacaoVenda(pagamentos, detalhe.total);
     onSalvar({ ...detalhe, pagamentos, situacao });
     setEditPag({});
     setShowAddPag(false);
@@ -91,13 +91,13 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
     const pagamentos = venda.pagamentos.map(p =>
       p.id === pagId ? { ...p, pago: !p.pago, pagoEm: !p.pago ? hoje() : undefined } : p
     );
-    onSalvar({ ...venda, pagamentos, situacao: calcularSituacaoVenda(pagamentos) });
+    onSalvar({ ...venda, pagamentos, situacao: calcularSituacaoVenda(pagamentos, venda.total) });
   };
 
   const removerPagamento = (pagId: string) => {
     if (!detalhe) return;
     const pagamentos = detalhe.pagamentos.filter(p => p.id !== pagId);
-    onSalvar({ ...detalhe, pagamentos, situacao: calcularSituacaoVenda(pagamentos) });
+    onSalvar({ ...detalhe, pagamentos, situacao: calcularSituacaoVenda(pagamentos, detalhe.total) });
   };
 
   const cardStyle = (f: SituacaoVenda | 'todos'): React.CSSProperties => ({
@@ -157,8 +157,8 @@ export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['DATA','NÚMERO','CLIENTE','ORÇAMENTO','VALOR','SITUAÇÃO',''].map(h => (
-                    <th key={h} style={{ textAlign: 'left', fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', letterSpacing: '0.7px', padding: '12px 16px', whiteSpace: 'nowrap' }}>{h}</th>
+                  {[['DATA','data'],['NÚMERO','numero'],['CLIENTE','cliente'],['ORÇAMENTO','orcamento'],['VALOR','valor'],['SITUAÇÃO','situacao'],['','acoes']].map(([label, key]) => (
+                    <th key={key} style={{ textAlign: 'left', fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', letterSpacing: '0.7px', padding: '12px 16px', whiteSpace: 'nowrap' }}>{label}</th>
                   ))}
                 </tr>
               </thead>
