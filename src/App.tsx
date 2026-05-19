@@ -108,12 +108,16 @@ export default function App() {
   useEffect(() => {
     const tk = localStorage.getItem(cfg.tokenKey);
     if (!tk) { setAppReady(true); return; }
-    authApi.me().then(u => {
-      setUser({ id: u.id, nome: u.nome, email: u.email, senha: '', role: u.role as any, ativo: u.ativo, criadoEm: '' });
-      return carregarDados();
-    }).catch(() => {
-      localStorage.removeItem(cfg.tokenKey);
-    }).finally(() => setAppReady(true));
+    authApi.me()
+      .then(u => {
+        setUser({ id: u.id, nome: u.nome, email: u.email, senha: '', role: u.role as any, ativo: u.ativo, criadoEm: '' });
+        carregarDados().catch(() => {});
+      })
+      .catch(() => {
+        localStorage.removeItem(cfg.tokenKey);
+        localStorage.removeItem('opsuite_token');
+      })
+      .finally(() => setAppReady(true));
   }, [carregarDados]);
 
   useEffect(() => {

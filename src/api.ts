@@ -3,7 +3,14 @@ import cfg from './config';
 // Vazio = mesma origem (backend serve frontend). Em dev/CRA, REACT_APP_API_URL aponta para o backend local.
 const API_BASE = process.env.REACT_APP_API_URL ?? '';
 
-function token() { return localStorage.getItem(cfg.tokenKey) || ''; }
+function token(): string {
+  const t = localStorage.getItem(cfg.tokenKey) || localStorage.getItem('opsuite_token');
+  if (!t) {
+    window.location.reload();
+    throw new Error('Sessão expirada. Faça login novamente.');
+  }
+  return t;
+}
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -17,6 +24,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 204) return undefined as T;
   if (res.status === 401 && path !== '/api/auth/login') {
     localStorage.removeItem(cfg.tokenKey);
+    localStorage.removeItem('opsuite_token');
     window.location.reload();
     return undefined as T;
   }

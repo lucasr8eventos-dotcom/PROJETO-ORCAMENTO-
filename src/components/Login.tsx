@@ -21,7 +21,6 @@ export default function Login({ onLogin }: Props) {
     try {
       const { token, usuario } = await authApi.login(email, senha);
       localStorage.setItem(cfg.tokenKey, token);
-      localStorage.setItem('opsuite_token', token);
       onLogin({ ...usuario, senha: '', role: usuario.role as any, ativo: true, criadoEm: '' });
     } catch (e: any) {
       setErro(e.message || 'Erro ao fazer login.');
