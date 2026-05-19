@@ -5,7 +5,7 @@ import cfg from './config';
 import { Section, Orcamento, Cliente, Produto, Evento, Usuario, Venda, OrdemServico } from './types';
 import { calcularTotais } from './data';
 import {
-  authApi, clientesApi, produtosApi, orcamentosApi,
+  clientesApi, produtosApi, orcamentosApi,
   vendasApi, ordensApi, eventosApi, usuariosApi,
 } from './api';
 import Login from './components/Login';
