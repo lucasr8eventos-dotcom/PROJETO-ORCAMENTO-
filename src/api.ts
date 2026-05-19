@@ -20,7 +20,9 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     window.location.reload();
     return undefined as T;
   }
-  const data = await res.json();
+  const text = await res.text();
+  let data: any;
+  try { data = JSON.parse(text); } catch { throw new Error(`Erro ${res.status}: resposta inesperada do servidor`); }
   if (!res.ok) throw new Error(data.erro || `Erro ${res.status}`);
   return data as T;
 }

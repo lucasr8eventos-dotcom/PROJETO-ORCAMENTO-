@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, osSchema, osUpdateSchema } from '../lib/validacao';
@@ -24,7 +24,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(os);
 }));
 
-router.post('/', validar(osSchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validar(osSchema), asyncHandler(async (req: AuthRequest, res) => {
   const {
     vendaId, vendaNumero, orcamentoNumero, clienteId, clienteNome, contato,
     enderecoEvento, dataMontagem, dataRetirada, horarioInicio, horarioFim,
@@ -54,13 +54,12 @@ router.post('/', validar(osSchema), async (req: AuthRequest, res: Response) => {
       return;
     } catch (e: any) {
       if (e.code === 'P2002' && tentativa < 4) continue;
-      res.status(500).json({ erro: e.message || 'Erro ao criar OS' });
-      return;
+      throw e;
     }
   }
-});
+}));
 
-router.put('/:id', validar(osUpdateSchema), async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(osUpdateSchema), asyncHandler(async (req: AuthRequest, res) => {
   const {
     enderecoEvento, dataMontagem, dataRetirada, horarioInicio, horarioFim,
     equipe, motorista, observacoesOperacionais, status,
@@ -76,13 +75,13 @@ router.put('/:id', validar(osUpdateSchema), async (req: AuthRequest, res: Respon
     });
     res.json(os);
   } catch { res.status(404).json({ erro: 'OS não encontrada' }); }
-});
+}));
 
-router.delete('/:id', apenasAdmin, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', apenasAdmin, asyncHandler(async (req: AuthRequest, res) => {
   try {
     await prisma.ordemServico.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch { res.status(404).json({ erro: 'OS não encontrada' }); }
-});
+}));
 
 export default router;

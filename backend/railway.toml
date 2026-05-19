@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd .. && npm install && npm run build && cd backend && npm run build && npx prisma generate"
+buildCommand = "npm run build && npx prisma generate"
 
 [deploy]
 startCommand = "npx prisma migrate deploy || echo 'migrate falhou - seguindo'; npm start"

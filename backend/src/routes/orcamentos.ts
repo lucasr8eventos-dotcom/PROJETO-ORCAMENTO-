@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, orcamentoSchema, orcamentoStatusSchema } from '../lib/validacao';
@@ -36,7 +36,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(o);
 }));
 
-router.post('/', validar(orcamentoSchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validar(orcamentoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { clienteId, clienteNome, contato, status, itens, desconto, impostos,
           observacoes, validade, criadoEm } = req.body;
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
@@ -62,13 +62,12 @@ router.post('/', validar(orcamentoSchema), async (req: AuthRequest, res: Respons
       return;
     } catch (e: any) {
       if (e.code === 'P2002' && tentativa < 4) continue;
-      res.status(500).json({ erro: e.message || 'Erro ao criar orçamento' });
-      return;
+      throw e;
     }
   }
-});
+}));
 
-router.put('/:id', validar(orcamentoSchema), async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(orcamentoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { clienteId, clienteNome, contato, status, itens, desconto, impostos,
           observacoes, validade } = req.body;
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
@@ -88,9 +87,9 @@ router.put('/:id', validar(orcamentoSchema), async (req: AuthRequest, res: Respo
     });
     res.json(o);
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }
-});
+}));
 
-router.patch('/:id/status', validar(orcamentoStatusSchema), async (req: AuthRequest, res: Response) => {
+router.patch('/:id/status', validar(orcamentoStatusSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { status } = req.body;
   try {
     const o = await prisma.orcamento.update({
@@ -98,13 +97,13 @@ router.patch('/:id/status', validar(orcamentoStatusSchema), async (req: AuthRequ
     });
     res.json(o);
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }
-});
+}));
 
-router.delete('/:id', apenasAdmin, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', apenasAdmin, asyncHandler(async (req: AuthRequest, res) => {
   try {
     await prisma.orcamento.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }
-});
+}));
 
 export default router;
