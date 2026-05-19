@@ -28,6 +28,10 @@ const upload = multer({
   },
 });
 
+function apiUrl() {
+  return process.env.API_URL || `http://localhost:${process.env.PORT || 3001}`;
+}
+
 router.get('/', asyncHandler(async (req, res) => {
   const { orcamentoId } = req.query;
   const pdfs = await prisma.pdfArquivo.findMany({
@@ -54,28 +58,26 @@ router.get('/:id/download', asyncHandler(async (req, res) => {
   fs.createReadStream(filepath).pipe(res);
 }));
 
-router.post('/upload', upload.single('pdf'), async (req: AuthRequest, res: Response) => {
+router.post('/upload', upload.single('pdf'), asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.file) { res.status(400).json({ erro: 'Arquivo PDF obrigatório' }); return; }
   const { orcamentoId, orcamentoNumero, versao } = req.body;
   if (!orcamentoId) { res.status(400).json({ erro: 'orcamentoId obrigatório' }); return; }
-
-  const apiUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3001}`;
 
   const pdf = await prisma.pdfArquivo.create({
     data: {
       orcamentoId, orcamentoNumero: orcamentoNumero || '',
       versao: Number(versao) || 1,
       nomeArquivo: req.file.filename,
-      url: `${apiUrl}/api/pdfs/PLACEHOLDER/download`,
+      url: '',
       criadoEm: new Date().toISOString().slice(0, 10),
     },
   });
-  const urlFinal = `${apiUrl}/api/pdfs/${pdf.id}/download`;
+  const urlFinal = `${apiUrl()}/api/pdfs/${pdf.id}/download`;
   const atualizado = await prisma.pdfArquivo.update({
     where: { id: pdf.id }, data: { url: urlFinal },
   });
   res.status(201).json(atualizado);
-});
+}));
 
 router.post('/base64', validar(pdfBase64Schema), asyncHandler(async (req, res) => {
   const { orcamentoId, orcamentoNumero, versao, base64 } = req.body;
@@ -88,24 +90,23 @@ router.post('/base64', validar(pdfBase64Schema), asyncHandler(async (req, res) =
     res.status(500).json({ erro: 'Falha ao salvar arquivo PDF no servidor' });
     return;
   }
-  const apiUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3001}`;
   const pdf = await prisma.pdfArquivo.create({
     data: {
       orcamentoId, orcamentoNumero: orcamentoNumero || '',
       versao: Number(versao) || 1,
       nomeArquivo: filename,
-      url: `${apiUrl}/api/pdfs/PLACEHOLDER/download`,
+      url: '',
       criadoEm: new Date().toISOString().slice(0, 10),
     },
   });
-  const urlFinal = `${apiUrl}/api/pdfs/${pdf.id}/download`;
+  const urlFinal = `${apiUrl()}/api/pdfs/${pdf.id}/download`;
   const atualizado = await prisma.pdfArquivo.update({
     where: { id: pdf.id }, data: { url: urlFinal },
   });
   res.status(201).json(atualizado);
 }));
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
   try {
     const pdf = await prisma.pdfArquivo.findUnique({ where: { id: req.params.id } });
     if (!pdf) { res.status(404).json({ erro: 'PDF não encontrado' }); return; }
@@ -114,6 +115,6 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     await prisma.pdfArquivo.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch { res.status(404).json({ erro: 'PDF não encontrado' }); }
-});
+}));
 
 export default router;

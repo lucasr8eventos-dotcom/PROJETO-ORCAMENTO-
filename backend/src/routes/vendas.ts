@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, vendaSchema, vendaUpdateSchema, pagamentoSchema, togglePagamentoSchema } from '../lib/validacao';
@@ -23,7 +23,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(v);
 }));
 
-router.post('/', validar(vendaSchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validar(vendaSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { orcamentoId, orcamentoNumero, clienteId, clienteNome, contato,
           desconto, impostos, subtotal, total, observacoes, criadoEm } = req.body;
 
@@ -45,13 +45,12 @@ router.post('/', validar(vendaSchema), async (req: AuthRequest, res: Response) =
       return;
     } catch (e: any) {
       if (e.code === 'P2002' && tentativa < 4) continue;
-      res.status(500).json({ erro: e.message || 'Erro ao criar venda' });
-      return;
+      throw e;
     }
   }
-});
+}));
 
-router.put('/:id', validar(vendaUpdateSchema), async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(vendaUpdateSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { contato, observacoes, situacao, pagamentos } = req.body;
   try {
     const v = await prisma.$transaction(async (tx) => {
@@ -71,9 +70,9 @@ router.put('/:id', validar(vendaUpdateSchema), async (req: AuthRequest, res: Res
     });
     res.json(v);
   } catch { res.status(404).json({ erro: 'Venda não encontrada' }); }
-});
+}));
 
-router.post('/:id/pagamentos', validar(pagamentoSchema), async (req: AuthRequest, res: Response) => {
+router.post('/:id/pagamentos', validar(pagamentoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { descricao, valor, vencimento, pago } = req.body;
   try {
     const pg = await prisma.$transaction(async (tx) => {
@@ -92,9 +91,9 @@ router.post('/:id/pagamentos', validar(pagamentoSchema), async (req: AuthRequest
     });
     res.status(201).json(pg);
   } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar pagamento' }); }
-});
+}));
 
-router.patch('/pagamentos/:pgId', validar(togglePagamentoSchema), async (req: AuthRequest, res: Response) => {
+router.patch('/pagamentos/:pgId', validar(togglePagamentoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { pago } = req.body;
   try {
     const pg = await prisma.$transaction(async (tx) => {
@@ -113,13 +112,13 @@ router.patch('/pagamentos/:pgId', validar(togglePagamentoSchema), async (req: Au
     });
     res.json(pg);
   } catch { res.status(404).json({ erro: 'Pagamento não encontrado' }); }
-});
+}));
 
-router.delete('/:id', apenasAdmin, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', apenasAdmin, asyncHandler(async (req: AuthRequest, res) => {
   try {
     await prisma.venda.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch { res.status(404).json({ erro: 'Venda não encontrada' }); }
-});
+}));
 
 export default router;

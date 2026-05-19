@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
@@ -25,7 +25,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(u);
 }));
 
-router.post('/', validar(usuarioCreateSchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validar(usuarioCreateSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { nome, email, senha, role } = req.body;
   const existe = await prisma.usuario.findUnique({ where: { email } });
   if (existe) { res.status(409).json({ erro: 'E-mail já cadastrado' }); return; }
@@ -36,9 +36,9 @@ router.post('/', validar(usuarioCreateSchema), async (req: AuthRequest, res: Res
     select: { id: true, nome: true, email: true, role: true, ativo: true, criadoEm: true },
   });
   res.status(201).json(u);
-});
+}));
 
-router.put('/:id', validar(usuarioUpdateSchema), async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(usuarioUpdateSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { nome, email, senha, role, ativo } = req.body;
   const data: any = { nome, email };
   if (role !== undefined) data.role = role;
@@ -53,9 +53,9 @@ router.put('/:id', validar(usuarioUpdateSchema), async (req: AuthRequest, res: R
     });
     res.json(u);
   } catch { res.status(404).json({ erro: 'Usuário não encontrado' }); }
-});
+}));
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', asyncHandler(async (req: AuthRequest, res) => {
   if (req.params.id === req.userId) {
     res.status(400).json({ erro: 'Não é possível excluir o próprio usuário' });
     return;
@@ -64,6 +64,6 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     await prisma.usuario.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch { res.status(404).json({ erro: 'Usuário não encontrado' }); }
-});
+}));
 
 export default router;

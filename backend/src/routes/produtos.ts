@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, produtoSchema } from '../lib/validacao';
@@ -17,17 +17,15 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(p);
 }));
 
-router.post('/', validar(produtoSchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validar(produtoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { nome, categoria, preco, unidade, estoque, tipo, ativo } = req.body;
-  try {
-    const p = await prisma.produto.create({
-      data: { nome, categoria, preco, unidade, estoque: estoque ?? null, tipo, ativo },
-    });
-    res.status(201).json(p);
-  } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar produto' }); }
-});
+  const p = await prisma.produto.create({
+    data: { nome, categoria, preco, unidade, estoque: estoque ?? null, tipo, ativo },
+  });
+  res.status(201).json(p);
+}));
 
-router.put('/:id', validar(produtoSchema), async (req: AuthRequest, res: Response) => {
+router.put('/:id', validar(produtoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { nome, categoria, preco, unidade, estoque, tipo, ativo } = req.body;
   try {
     const p = await prisma.produto.update({
@@ -36,13 +34,13 @@ router.put('/:id', validar(produtoSchema), async (req: AuthRequest, res: Respons
     });
     res.json(p);
   } catch { res.status(404).json({ erro: 'Produto não encontrado' }); }
-});
+}));
 
-router.delete('/:id', apenasAdmin, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', apenasAdmin, asyncHandler(async (req: AuthRequest, res) => {
   try {
     await prisma.produto.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch { res.status(404).json({ erro: 'Produto não encontrado' }); }
-});
+}));
 
 export default router;
