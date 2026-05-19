@@ -157,12 +157,12 @@ export function proximoNumeroOS(ordens: OrdemServico[]): string {
   return `OS-${String(next).padStart(4, '0')}`;
 }
 
-export function calcularSituacaoVenda(pagamentos: Venda['pagamentos']): Venda['situacao'] {
+export function calcularSituacaoVenda(pagamentos: Venda['pagamentos'], totalVenda?: number): Venda['situacao'] {
   if (!pagamentos.length) return 'pendente';
   const totalPago = pagamentos.filter(p => p.pago).reduce((s, p) => s + p.valor, 0);
-  const totalGeral = pagamentos.reduce((s, p) => s + p.valor, 0);
+  const totalRef = totalVenda ?? pagamentos.reduce((s, p) => s + p.valor, 0);
   if (totalPago === 0) return 'pendente';
-  if (totalPago >= totalGeral) return 'quitado';
+  if (totalPago >= totalRef) return 'quitado';
   return 'parcial';
 }
 

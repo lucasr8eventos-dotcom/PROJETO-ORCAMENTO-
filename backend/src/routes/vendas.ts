@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, vendaSchema, vendaUpdateSchema, pagamentoSchema, togglePagamentoSchema } from '../lib/validacao';
@@ -51,9 +52,9 @@ router.post('/', validar(vendaSchema), asyncHandler(async (req: AuthRequest, res
 }));
 
 router.put('/:id', validar(vendaUpdateSchema), asyncHandler(async (req: AuthRequest, res) => {
-  const { contato, observacoes, situacao, pagamentos } = req.body;
+  const { contato, observacoes, situacao, editavel, pagamentos } = req.body;
   try {
-    const v = await prisma.$transaction(async (tx) => {
+    const v = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.pagamentoVenda.deleteMany({ where: { vendaId: req.params.id } });
       return tx.venda.update({
         where: { id: req.params.id },
@@ -61,7 +62,8 @@ router.put('/:id', validar(vendaUpdateSchema), asyncHandler(async (req: AuthRequ
           contato: contato ?? undefined,
           observacoes: observacoes ?? undefined,
           situacao: situacao ?? undefined,
-          pagamentos: { create: pagamentos.map((p: any) => ({
+          editavel: editavel ?? undefined,
+          pagamentos: { create: pagamentos.map((p: { descricao: string; valor: number; vencimento: string; pago: boolean }) => ({
             descricao: p.descricao, valor: p.valor, vencimento: p.vencimento, pago: p.pago,
           })) },
         },
@@ -75,7 +77,7 @@ router.put('/:id', validar(vendaUpdateSchema), asyncHandler(async (req: AuthRequ
 router.post('/:id/pagamentos', validar(pagamentoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { descricao, valor, vencimento, pago } = req.body;
   try {
-    const pg = await prisma.$transaction(async (tx) => {
+    const pg = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const novo = await tx.pagamentoVenda.create({
         data: { vendaId: req.params.id, descricao, valor, vencimento, pago },
       });
@@ -83,20 +85,20 @@ router.post('/:id/pagamentos', validar(pagamentoSchema), asyncHandler(async (req
         where: { id: req.params.id }, include: { pagamentos: true },
       });
       if (venda) {
-        const totalPago = venda.pagamentos.reduce((s, p) => s + (p.pago ? p.valor : 0), 0);
+        const totalPago = venda.pagamentos.reduce((s: number, p: { pago: boolean; valor: number }) => s + (p.pago ? p.valor : 0), 0);
         const situacao = totalPago === 0 ? 'pendente' : totalPago >= venda.total ? 'quitado' : 'parcial';
         await tx.venda.update({ where: { id: req.params.id }, data: { situacao } });
       }
       return novo;
     });
     res.status(201).json(pg);
-  } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar pagamento' }); }
+  } catch { res.status(500).json({ erro: 'Erro ao criar pagamento' }); }
 }));
 
 router.patch('/pagamentos/:pgId', validar(togglePagamentoSchema), asyncHandler(async (req: AuthRequest, res) => {
   const { pago } = req.body;
   try {
-    const pg = await prisma.$transaction(async (tx) => {
+    const pg = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const atualizado = await tx.pagamentoVenda.update({
         where: { id: req.params.pgId }, data: { pago },
       });
@@ -104,7 +106,7 @@ router.patch('/pagamentos/:pgId', validar(togglePagamentoSchema), asyncHandler(a
         where: { id: atualizado.vendaId }, include: { pagamentos: true },
       });
       if (venda) {
-        const totalPago = venda.pagamentos.reduce((s, p) => s + (p.pago ? p.valor : 0), 0);
+        const totalPago = venda.pagamentos.reduce((s: number, p: { pago: boolean; valor: number }) => s + (p.pago ? p.valor : 0), 0);
         const situacao = totalPago === 0 ? 'pendente' : totalPago >= venda.total ? 'quitado' : 'parcial';
         await tx.venda.update({ where: { id: atualizado.vendaId }, data: { situacao } });
       }

@@ -61,8 +61,8 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%',borderCollapse:'collapse' }}>
               <thead>
-                <tr>{['NOME','CATEGORIA','TIPO','PREÇO','UNIDADE','ESTOQUE','STATUS',''].map(h=>(
-                  <th key={h} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{h}</th>
+                <tr>{[['NOME','nome'],['CATEGORIA','categoria'],['TIPO','tipo'],['PREÇO','preco'],['UNIDADE','unidade'],['ESTOQUE','estoque'],['STATUS','status'],['','acoes']].map(([label,key])=>(
+                  <th key={key} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{label}</th>
                 ))}</tr>
               </thead>
               <tbody>

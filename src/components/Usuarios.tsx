@@ -22,7 +22,7 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
 
-  const abrirNovo = () => { setForm(empty()); setErro(''); setMostrarSenha(false); setModal(true); };
+  const abrirNovo = () => { setForm(empty()); setErro(''); setMostrarSenha(true); setModal(true); };
   const abrirEditar = (u: Usuario) => { setForm({ ...u, senha: '' }); setErro(''); setMostrarSenha(false); setModal(true); };
 
   const salvar = () => {
@@ -54,8 +54,8 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%',borderCollapse:'collapse' }}>
               <thead>
-                <tr>{['USUÁRIO','E-MAIL','PERFIL','STATUS','CRIADO EM',''].map(h=>(
-                  <th key={h} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{h}</th>
+                <tr>{[['USUÁRIO','usuario'],['E-MAIL','email'],['PERFIL','perfil'],['STATUS','status'],['CRIADO EM','criado'],['','acoes']].map(([label,key])=>(
+                  <th key={key} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{label}</th>
                 ))}</tr>
               </thead>
               <tbody>

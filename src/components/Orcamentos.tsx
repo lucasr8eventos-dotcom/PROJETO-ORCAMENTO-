@@ -135,8 +135,8 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
             <table style={{ width:'100%',borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ borderBottom:'1px solid var(--border)' }}>
-                  {['DATA','NÚMERO','CLIENTE','VALOR','SITUAÇÃO','',''].map(h=>(
-                    <th key={h} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',whiteSpace:'nowrap' }}>{h}</th>
+                  {[['DATA','data'],['NÚMERO','numero'],['CLIENTE','cliente'],['VALOR','valor'],['SITUAÇÃO','situacao'],['','pdf'],['','acoes']].map(([label, key])=>(
+                    <th key={key} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',whiteSpace:'nowrap' }}>{label}</th>
                   ))}
                 </tr>
               </thead>

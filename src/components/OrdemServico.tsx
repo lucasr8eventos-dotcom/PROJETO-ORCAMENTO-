@@ -297,8 +297,8 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['DATA','NÚMERO OS','CLIENTE','VENDA','EVENTO','STATUS',''].map(h => (
-                    <th key={h} style={{ textAlign: 'left', fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', letterSpacing: '0.7px', padding: '12px 16px', whiteSpace: 'nowrap' }}>{h}</th>
+                  {[['DATA','data'],['NÚMERO OS','numero'],['CLIENTE','cliente'],['VENDA','venda'],['EVENTO','evento'],['STATUS','status'],['','acoes']].map(([label, key]) => (
+                    <th key={key} style={{ textAlign: 'left', fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', letterSpacing: '0.7px', padding: '12px 16px', whiteSpace: 'nowrap' }}>{label}</th>
                   ))}
                 </tr>
               </thead>

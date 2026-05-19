@@ -101,6 +101,7 @@ model Venda {
   observacoes     String
   criadoEm       String
   situacao        String           @default("pendente")
+  editavel        Boolean          @default(false)
 
   pagamentos    PagamentoVenda[]
   ordensServico OrdemServico[]
