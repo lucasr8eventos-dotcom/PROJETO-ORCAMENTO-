@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String  @id @default(uuid())
+  nome      String
+  email     String  @unique
+  senha     String
+  role      String  @default("operacional")
+  ativo     Boolean @default(true)
+  criadoEm String
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  id        String @id @default(uuid())
+  nome      String
+  email     String
+  telefone  String
+  empresa   String
+  cnpj      String
+  cpf       String
+  endereco  String
+  criadoEm String
+
+  orcamentos Orcamento[]
+  vendas     Venda[]
+
+  @@map("clientes")
+}
+
+model Produto {
+  id        String  @id @default(uuid())
+  nome      String
+  categoria String
+  preco     Float
+  unidade   String
+  estoque   Int?
+  tipo      String  @default("produto")
+  ativo     Boolean @default(true)
+
+  @@map("produtos")
+}
+
+model Orcamento {
+  id          String @id @default(uuid())
+  numero      String @unique
+  clienteId   String
+  cliente     Cliente        @relation(fields: [clienteId], references: [id])
+  clienteNome String
+  contato     String
+  status      String         @default("rascunho")
+  desconto    Float          @default(0)
+  impostos    Float          @default(0)
+  observacoes String
+  criadoEm   String
+  validade    String
+  subtotal    Float
+  total       Float
+
+  itens  OrcamentoItem[]
+  vendas Venda[]
+  pdfs   PdfArquivo[]
+
+  @@map("orcamentos")
+}
+
+model OrcamentoItem {
+  id            String    @id @default(uuid())
+  orcamentoId   String
+  orcamento     Orcamento @relation(fields: [orcamentoId], references: [id], onDelete: Cascade)
+  descricao     String
+  quantidade    Float
+  valorUnitario Float
+  periodo       String?
+
+  @@map("orcamento_itens")
+}
+
+model Venda {
+  id              String @id @default(uuid())
+  numero          String @unique
+  orcamentoId     String?
+  orcamento       Orcamento?       @relation(fields: [orcamentoId], references: [id])
+  orcamentoNumero String
+  clienteId       String?
+  cliente         Cliente?         @relation(fields: [clienteId], references: [id])
+  clienteNome     String
+  contato         String
+  desconto        Float
+  impostos        Float
+  subtotal        Float
+  total           Float
+  observacoes     String
+  criadoEm       String
+  situacao        String           @default("pendente")
+  editavel        Boolean          @default(false)
+
+  pagamentos    PagamentoVenda[]
+  ordensServico OrdemServico[]
+
+  @@map("vendas")
+}
+
+model PagamentoVenda {
+  id         String  @id @default(uuid())
+  vendaId    String
+  venda      Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  descricao  String
+  valor      Float
+  vencimento String
+  pago       Boolean @default(false)
+  pagoEm     String?
+
+  @@map("pagamentos_venda")
+}
+
+model OrdemServico {
+  id                      String  @id @default(uuid())
+  numero                  String  @unique
+  vendaId                 String?
+  venda                   Venda?  @relation(fields: [vendaId], references: [id])
+  vendaNumero             String
+  orcamentoNumero         String
+  clienteId               String?
+  clienteNome             String
+  contato                 String
+  enderecoEvento          String
+  dataMontagem            String
+  dataRetirada            String
+  horarioInicio           String
+  horarioFim              String
+  equipe                  String
+  motorista               String
+  observacoesOperacionais String
+  status                  String  @default("pendente")
+  criadoEm              String
+
+  itens OSItem[]
+
+  @@map("ordens_servico")
+}
+
+model OSItem {
+  id            String       @id @default(uuid())
+  osId          String
+  os            OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+  descricao     String
+  quantidade    Float
+  valorUnitario Float
+  periodo       String?
+
+  @@map("os_itens")
+}
+
+model Evento {
+  id         String  @id @default(uuid())
+  titulo     String
+  data       String
+  horaInicio String
+  horaFim    String
+  tipo       String
+  descricao  String
+  concluido  Boolean @default(false)
+
+  @@map("eventos")
+}
+
+model PdfArquivo {
+  id              String    @id @default(uuid())
+  orcamentoId     String
+  orcamento       Orcamento @relation(fields: [orcamentoId], references: [id], onDelete: Cascade)
+  orcamentoNumero String
+  nomeArquivo     String
+  url             String
+  versao          Int       @default(1)
+  criadoEm       String
+
+  @@map("pdf_arquivos")
+}

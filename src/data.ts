@@ -1,4 +1,4 @@
-import { Orcamento, Cliente, Produto, Tarefa, Evento, Usuario } from './types';
+import { Orcamento, Cliente, Produto, Tarefa, Evento, Usuario, Venda, OrdemServico } from './types';
 import { v4 as uuid } from 'uuid';
 import { format, addDays } from 'date-fns';
 
@@ -94,6 +94,77 @@ export const eventosIniciais: Evento[] = [
 export const usuariosIniciais: Usuario[] = [
   { id: uuid(), nome: 'Administrador', email: 'admin@empresa.com', senha: 'admin123', role: 'admin', ativo: true, criadoEm: fmt(hoje) },
 ];
+
+export const vendasIniciais: Venda[] = [
+  {
+    id: 'v1', numero: 'VND-0001', orcamentoId: 'o1', orcamentoNumero: 'ORÇ-0047',
+    clienteId: 'c1', clienteNome: 'Eventos Prime Ltda', contato: 'Maria Santos',
+    itens: [
+      { id: 'vi1', descricao: 'Sistema de Som Pro', quantidade: 2, valorUnitario: 850, periodo: '3 dias' },
+      { id: 'vi2', descricao: 'Mesa de Luz LED', quantidade: 4, valorUnitario: 650, periodo: '3 dias' },
+    ],
+    desconto: 5, impostos: 0, subtotal: 4300, total: 4085,
+    observacoes: 'Pagamento em 30 dias.', criadoEm: fmt(addDays(hoje, -3)),
+    situacao: 'pendente', pagamentos: [],
+  },
+  {
+    id: 'v2', numero: 'VND-0002', orcamentoId: 'o5', orcamentoNumero: 'ORÇ-0043',
+    clienteId: 'c5', clienteNome: 'Farmácias Bem Estar', contato: 'Lucia Fernandes',
+    itens: [
+      { id: 'vi3', descricao: 'Sistema de Som Pro', quantidade: 4, valorUnitario: 850, periodo: '3 dias' },
+      { id: 'vi4', descricao: 'Mesa de Luz LED', quantidade: 6, valorUnitario: 650, periodo: '3 dias' },
+    ],
+    desconto: 0, impostos: 0, subtotal: 7300, total: 7300,
+    observacoes: 'Contrato assinado.', criadoEm: fmt(addDays(hoje, -7)),
+    situacao: 'pendente', pagamentos: [],
+  },
+];
+
+export const ordensServicoIniciais: OrdemServico[] = [
+  {
+    id: 'os1', numero: 'OS-0001', vendaId: 'v1', vendaNumero: 'VND-0001', orcamentoNumero: 'ORÇ-0047',
+    clienteId: 'c1', clienteNome: 'Eventos Prime Ltda', contato: 'Maria Santos',
+    enderecoEvento: '', dataMontagem: '', dataRetirada: '', horarioInicio: '', horarioFim: '',
+    equipe: '', motorista: '',
+    itens: [
+      { id: 'oi1', descricao: 'Sistema de Som Pro', quantidade: 2, valorUnitario: 850, periodo: '3 dias' },
+      { id: 'oi2', descricao: 'Mesa de Luz LED', quantidade: 4, valorUnitario: 650, periodo: '3 dias' },
+    ],
+    observacoesOperacionais: 'Pagamento em 30 dias.', status: 'pendente', criadoEm: fmt(addDays(hoje, -3)),
+  },
+  {
+    id: 'os2', numero: 'OS-0002', vendaId: 'v2', vendaNumero: 'VND-0002', orcamentoNumero: 'ORÇ-0043',
+    clienteId: 'c5', clienteNome: 'Farmácias Bem Estar', contato: 'Lucia Fernandes',
+    enderecoEvento: '', dataMontagem: '', dataRetirada: '', horarioInicio: '', horarioFim: '',
+    equipe: '', motorista: '',
+    itens: [
+      { id: 'oi3', descricao: 'Sistema de Som Pro', quantidade: 4, valorUnitario: 850, periodo: '3 dias' },
+      { id: 'oi4', descricao: 'Mesa de Luz LED', quantidade: 6, valorUnitario: 650, periodo: '3 dias' },
+    ],
+    observacoesOperacionais: 'Contrato assinado.', status: 'pendente', criadoEm: fmt(addDays(hoje, -7)),
+  },
+];
+
+export function proximoNumeroVenda(vendas: Venda[]): string {
+  const nums = vendas.map(v => parseInt(v.numero.replace('VND-', ''), 10)).filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `VND-${String(next).padStart(4, '0')}`;
+}
+
+export function proximoNumeroOS(ordens: OrdemServico[]): string {
+  const nums = ordens.map(o => parseInt(o.numero.replace('OS-', ''), 10)).filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `OS-${String(next).padStart(4, '0')}`;
+}
+
+export function calcularSituacaoVenda(pagamentos: Venda['pagamentos'], totalVenda?: number): Venda['situacao'] {
+  if (!pagamentos.length) return 'pendente';
+  const totalPago = pagamentos.filter(p => p.pago).reduce((s, p) => s + p.valor, 0);
+  const totalRef = totalVenda ?? pagamentos.reduce((s, p) => s + p.valor, 0);
+  if (totalPago === 0) return 'pendente';
+  if (totalPago >= totalRef) return 'quitado';
+  return 'parcial';
+}
 
 export function calcularTotais(orc: Pick<Orcamento, 'itens' | 'desconto' | 'impostos'>): { subtotal: number; total: number } {
   const subtotal = orc.itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0);

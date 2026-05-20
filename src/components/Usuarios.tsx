@@ -22,7 +22,7 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
 
-  const abrirNovo = () => { setForm(empty()); setErro(''); setMostrarSenha(false); setModal(true); };
+  const abrirNovo = () => { setForm(empty()); setErro(''); setMostrarSenha(true); setModal(true); };
   const abrirEditar = (u: Usuario) => { setForm({ ...u, senha: '' }); setErro(''); setMostrarSenha(false); setModal(true); };
 
   const salvar = () => {
@@ -54,8 +54,8 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%',borderCollapse:'collapse' }}>
               <thead>
-                <tr>{['USUÁRIO','E-MAIL','PERFIL','STATUS','CRIADO EM',''].map(h=>(
-                  <th key={h} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{h}</th>
+                <tr>{[['USUÁRIO','usuario'],['E-MAIL','email'],['PERFIL','perfil'],['STATUS','status'],['CRIADO EM','criado'],['','acoes']].map(([label,key])=>(
+                  <th key={key} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{label}</th>
                 ))}</tr>
               </thead>
               <tbody>
@@ -114,19 +114,30 @@ export default function Usuarios({ usuarios, usuarioAtualId, onSalvar, onDelete 
             <Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@empresa.com" />
           </FormField>
           <FormField label={form.id ? 'Nova senha (deixe vazio para manter)' : 'Senha *'}>
-            <div style={{ position:'relative' }}>
+            {form.id ? (
+              <div style={{ position:'relative' }}>
+                <Input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  value={form.senha}
+                  onChange={e=>setForm({...form,senha:e.target.value})}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  style={{ paddingRight:40 }}
+                />
+                <button type="button" onClick={()=>setMostrarSenha(v=>!v)}
+                  style={{ position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:14,color:'var(--text3)' }}>
+                  {mostrarSenha ? '🙈' : '👁️'}
+                </button>
+              </div>
+            ) : (
               <Input
-                type={mostrarSenha ? 'text' : 'password'}
+                type="text"
                 value={form.senha}
                 onChange={e=>setForm({...form,senha:e.target.value})}
-                placeholder={form.id ? '••••••••' : 'Mínimo 4 caracteres'}
-                style={{ paddingRight:40 }}
+                placeholder="Mínimo 4 caracteres"
+                autoComplete="new-password"
               />
-              <button type="button" onClick={()=>setMostrarSenha(v=>!v)}
-                style={{ position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:14,color:'var(--text3)' }}>
-                {mostrarSenha ? '🙈' : '👁️'}
-              </button>
-            </div>
+            )}
           </FormField>
           <FormField label="Perfil">
             <Select value={form.role} onChange={e=>setForm({...form,role:e.target.value as 'admin'|'operacional'})}>

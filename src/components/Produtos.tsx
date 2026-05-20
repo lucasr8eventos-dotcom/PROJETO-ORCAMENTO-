@@ -35,8 +35,9 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
   const abrirEditar = (p: Produto) => { setForm({ ...p }); setModal(true); };
 
   const salvar = () => {
-    if (!form.nome) return alert('Nome obrigatório');
-    onSalvar({ ...form, id: form.id || uuid() });
+    const nome = form.nome.trim();
+    if (!nome) return alert('Nome obrigatório');
+    onSalvar({ ...form, nome, id: form.id || uuid() });
     setModal(false);
   };
 
@@ -60,8 +61,8 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%',borderCollapse:'collapse' }}>
               <thead>
-                <tr>{['NOME','CATEGORIA','TIPO','PREÇO','UNIDADE','ESTOQUE','STATUS',''].map(h=>(
-                  <th key={h} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{h}</th>
+                <tr>{[['NOME','nome'],['CATEGORIA','categoria'],['TIPO','tipo'],['PREÇO','preco'],['UNIDADE','unidade'],['ESTOQUE','estoque'],['STATUS','status'],['','acoes']].map(([label,key])=>(
+                  <th key={key} style={{ textAlign:'left',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'12px 16px',borderBottom:'1px solid var(--border)',whiteSpace:'nowrap' }}>{label}</th>
                 ))}</tr>
               </thead>
               <tbody>
@@ -78,7 +79,11 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
                         {p.tipo === 'servico' ? 'Serviço' : 'Produto'}
                       </span>
                     </td>
-                    <td style={{ padding:'11px 16px',fontSize:13,fontWeight:600 }}>{fmtMoeda(p.preco)}</td>
+                    <td style={{ padding:'11px 16px',fontSize:13,fontWeight:600 }}>
+                      {p.preco === 0
+                        ? <span title="Preço não definido" style={{ color:'var(--amber)',display:'inline-flex',alignItems:'center',gap:4 }}>⚠️ {fmtMoeda(p.preco)}</span>
+                        : fmtMoeda(p.preco)}
+                    </td>
                     <td style={{ padding:'11px 16px',fontSize:12.5,color:'var(--text2)' }}>/{p.unidade}</td>
                     <td style={{ padding:'11px 16px',fontSize:13 }}>{p.estoque !== null ? `${p.estoque} unid.` : '—'}</td>
                     <td style={{ padding:'11px 16px' }}>
@@ -110,7 +115,21 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
               <option value="servico">Serviço</option>
             </Select>
           </FormField>
-          <FormField label="Unidade"><Input value={form.unidade} onChange={e=>setForm({...form,unidade:e.target.value})} placeholder="diária, hora, unidade..." /></FormField>
+          <FormField label="Unidade">
+            <Select value={form.unidade} onChange={e=>setForm({...form,unidade:e.target.value})}>
+              <option value="unidade">unidade</option>
+              <option value="diária">diária</option>
+              <option value="metro">metro</option>
+              <option value="hora">hora</option>
+              <option value="m²">m²</option>
+              <option value="m³">m³</option>
+              <option value="pacote">pacote</option>
+              <option value="lote">lote</option>
+              <option value="serviço">serviço</option>
+              <option value="mensal">mensal</option>
+              <option value="outros">outros</option>
+            </Select>
+          </FormField>
           <FormField label="Preço"><CurrencyInput value={form.preco} onChange={v=>setForm({...form,preco:v})} /></FormField>
           {form.tipo === 'produto' && (
             <FormField label="Estoque"><Input type="number" value={form.estoque??0} min={0} onChange={e=>setForm({...form,estoque:parseInt(e.target.value)||0})} /></FormField>

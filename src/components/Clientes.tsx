@@ -30,8 +30,9 @@ export default function Clientes({ clientes, onSalvar, onDelete }: Props) {
   const abrirEditar = (c: Cliente) => { setForm({ ...c }); setModal(true); };
 
   const salvar = () => {
-    if (!form.nome) return alert('Nome obrigatório');
-    onSalvar({ ...form, id: form.id || uuid() });
+    const nome = form.nome.trim();
+    if (!nome) return alert('Nome obrigatório');
+    onSalvar({ ...form, nome, id: form.id || uuid() });
     setModal(false);
   };
 
@@ -77,7 +78,7 @@ export default function Clientes({ clientes, onSalvar, onDelete }: Props) {
           <FormField label="Empresa / Razão Social"><Input value={form.empresa} onChange={e=>setForm({...form,empresa:e.target.value})} placeholder="Nome da empresa" /></FormField>
           <FormField label="E-mail"><Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
           <FormField label="Telefone"><TelefoneInput value={form.telefone} onChange={v=>setForm({...form,telefone:v})} /></FormField>
-          <FormField label="CPF / CNPJ"><CpfCnpjInput value={form.cnpj} onChange={v=>setForm({...form,cnpj:v})} /></FormField>
+          <FormField label="CPF / CNPJ"><CpfCnpjInput value={form.cnpj||form.cpf} onChange={v=>{const d=v.replace(/\D/g,'');if(d.length<=11)setForm({...form,cpf:v,cnpj:''});else setForm({...form,cnpj:v,cpf:''});}} /></FormField>
         </div>
         <FormField label="Endereço" style={{ marginBottom:14 }}><Input value={form.endereco} onChange={e=>setForm({...form,endereco:e.target.value})} placeholder="Rua, número, cidade/estado" /></FormField>
         <div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}>

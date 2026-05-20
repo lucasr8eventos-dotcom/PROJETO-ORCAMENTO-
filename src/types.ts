@@ -1,4 +1,4 @@
-export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'aguardando';
+export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'aguardando' | 'cancelado';
 
 export interface Usuario {
   id: string;
@@ -78,4 +78,59 @@ export interface Evento {
   concluido: boolean;
 }
 
-export type Section = 'dashboard' | 'orcamentos' | 'novo-orcamento' | 'clientes' | 'produtos' | 'agenda' | 'configuracoes' | 'usuarios';
+export type SituacaoVenda = 'pendente' | 'parcial' | 'quitado' | 'cancelado';
+
+export interface PagamentoVenda {
+  id: string;
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  pago: boolean;
+  pagoEm?: string;
+}
+
+export interface Venda {
+  id: string;
+  numero: string;
+  orcamentoId: string;
+  orcamentoNumero: string;
+  clienteId: string;
+  clienteNome: string;
+  contato: string;
+  itens: LineItem[];
+  desconto: number;
+  impostos: number;
+  subtotal: number;
+  total: number;
+  observacoes: string;
+  criadoEm: string;
+  situacao: SituacaoVenda;
+  pagamentos: PagamentoVenda[];
+  editavel?: boolean;
+}
+
+export type OSStatus = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada';
+
+export interface OrdemServico {
+  id: string;
+  numero: string;
+  vendaId: string;
+  vendaNumero: string;
+  orcamentoNumero: string;
+  clienteId: string;
+  clienteNome: string;
+  contato: string;
+  enderecoEvento: string;
+  dataMontagem: string;
+  dataRetirada: string;
+  horarioInicio: string;
+  horarioFim: string;
+  equipe: string;
+  motorista: string;
+  itens: LineItem[];
+  observacoesOperacionais: string;
+  status: OSStatus;
+  criadoEm: string;
+}
+
+export type Section = 'dashboard' | 'orcamentos' | 'novo-orcamento' | 'clientes' | 'produtos' | 'agenda' | 'vendas' | 'ordens-servico' | 'configuracoes' | 'usuarios';

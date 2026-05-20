@@ -9,14 +9,14 @@ const fmtVal = (v: number) =>
   v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const fmtData = (s: string) =>
-  format(new Date(s + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR });
+  s ? format(new Date(s + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—';
 
 const defaultConfig: ConfigEmpresa = {
   nome: 'Empresa', razaoSocial: '', cnpj: '', ie: '',
   email: '', telefone: '', endereco: '', logo: '',
 };
 
-export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, cliente?: Cliente) {
+export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, cliente?: Cliente): string | undefined {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210;
   const M = 13;
@@ -128,7 +128,6 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
   const validColW = 46;
   const sepX = W - M - validColW;
 
-  // --- dados do cliente (lado esquerdo) ---
   const clientName = orc.clienteNome?.trim() || 'CONSUMIDOR';
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
@@ -151,7 +150,6 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
 
   const clientH = Math.max(24, 18 + clientLines.length * 5);
 
-  // --- separador vertical e validade (lado direito) ---
   doc.setDrawColor(...C.line);
   doc.setLineWidth(0.3);
   doc.line(sepX, clientTop, sepX, clientTop + clientH);
@@ -218,7 +216,7 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
     },
   });
 
-  y = (doc as any).lastAutoTable.finalY;
+  y = (doc as any).lastAutoTable?.finalY ?? y;
 
   const totX = W - M - 62;
 
@@ -278,4 +276,5 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
   doc.text('Página 1 de 1', W - M, pageH - 7, { align: 'right' });
 
   doc.save(`${orc.numero}.pdf`);
+  return doc.output('datauristring').split(',')[1];
 }

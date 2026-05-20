@@ -121,7 +121,7 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width:'100%',borderCollapse:'collapse' }}>
             <thead>
-              <tr>{['NÚMERO','CLIENTE','VALOR','DATA','VALIDADE','STATUS',''].map(h=>(
+              <tr>{['NÚMERO','CLIENTE','VALOR','DATA','VALIDADE','STATUS'].map(h=>(
                 <th key={h} style={{ textAlign:'left',fontSize:11,fontWeight:500,color:'var(--text3)',letterSpacing:'0.7px',padding:'0 14px 10px',borderBottom:'1px solid var(--border)' }}>{h}</th>
               ))}</tr>
             </thead>
@@ -134,9 +134,6 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
                   <td style={{ padding:'11px 14px',fontSize:12.5,color:'var(--text2)' }}>{format(new Date(o.criadoEm+'T12:00:00'),'dd/MM',{locale:ptBR})}</td>
                   <td style={{ padding:'11px 14px',fontSize:12.5,color:'var(--text2)' }}>{format(new Date(o.validade+'T12:00:00'),'dd/MM',{locale:ptBR})}</td>
                   <td style={{ padding:'11px 14px' }}><StatusBadge status={o.status} /></td>
-                  <td style={{ padding:'11px 14px' }}>
-                    <span style={{ color:'var(--text3)',fontSize:18 }}>⋯</span>
-                  </td>
                 </tr>
               ))}
             </tbody>

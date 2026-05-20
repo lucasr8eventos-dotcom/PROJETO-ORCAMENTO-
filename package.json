@@ -37,6 +37,11 @@
       "react-app/jest"
     ]
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(uuid|date-fns)/)"
+    ]
+  },
   "browserslist": {
     "production": [
       ">0.2%",

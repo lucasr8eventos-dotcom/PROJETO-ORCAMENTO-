@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const statusConfig = {
   aprovado:  { label: 'Aprovado',   bg: 'var(--green-bg)', color: 'var(--green)' },
   enviado:   { label: 'Enviado',    bg: 'var(--blue-bg)',  color: 'var(--blue)'  },
   aguardando:{ label: 'Aguardando', bg: 'var(--amber-bg)', color: 'var(--amber)' },
   recusado:  { label: 'Recusado',   bg: 'var(--red-bg)',   color: 'var(--red)'   },
+  cancelado: { label: 'Cancelado',  bg: 'var(--red-bg)',   color: 'var(--red)'   },
   rascunho:  { label: 'Rascunho',   bg: 'var(--surface3)', color: 'var(--text2)' },
 };
 
@@ -128,19 +129,19 @@ export function Avatar({ name, size=38 }: { name:string; size?:number }) {
 export const fmtMoeda = (v: number) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 export function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v: number) => void; style?: React.CSSProperties }) {
-  const [focused, setFocused] = useState(false);
   const [raw, setRaw] = useState('');
-  const ref = useRef<HTMLInputElement>(null);
-  const display = focused ? raw : value === 0 ? '' : fmtMoeda(value);
-  const handleFocus = () => { setRaw(Math.round(value * 100) === 0 ? '' : String(Math.round(value * 100))); setFocused(true); };
+  const [focused, setFocused] = useState(false);
+  const fmt = (digits: string) => (parseInt(digits || '0', 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const display = focused ? (raw ? fmt(raw) : '') : (value === 0 ? '' : value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const handleFocus = () => { const c = Math.round(value * 100); setRaw(c === 0 ? '' : String(c)); setFocused(true); };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '');
     setRaw(digits);
     onChange(parseInt(digits || '0', 10) / 100);
   };
   return (
-    <input ref={ref} value={display} onChange={handleChange} onFocus={handleFocus} onBlur={()=>{setFocused(false);setRaw('');}}
-      placeholder="R$ 0,00" inputMode="numeric"
+    <input value={display} onChange={handleChange} onFocus={handleFocus} onBlur={() => { setFocused(false); setRaw(''); }}
+      placeholder="0,00" inputMode="numeric"
       style={{ ...inputStyle, ...style }} />
   );
 }
@@ -175,8 +176,8 @@ export function TelefoneInput({ value, onChange }: { value: string; onChange: (v
     const d = e.target.value.replace(/\D/g, '').slice(0, 11);
     let fmt = d;
     if (d.length > 2)  fmt = `(${d.slice(0,2)}) ${d.slice(2)}`;
-    if (d.length > 7)  fmt = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-    if (d.length <= 10 && d.length > 6) fmt = `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    if (d.length > 6)  fmt = `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    if (d.length > 10) fmt = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
     onChange(fmt);
   };
   return (
@@ -199,7 +200,15 @@ export function DataInput({ value, onChange }: { value: string; onChange: (v: st
     if (d.length > 2) fmt = `${d.slice(0,2)}/${d.slice(2)}`;
     if (d.length > 4) fmt = `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
     setText(fmt);
-    if (d.length === 8) onChange(`${d.slice(4,8)}-${d.slice(2,4)}-${d.slice(0,2)}`);
+    if (d.length === 8) {
+      const dia = parseInt(d.slice(0,2), 10);
+      const mes = parseInt(d.slice(2,4), 10);
+      const ano = parseInt(d.slice(4,8), 10);
+      const data = new Date(ano, mes - 1, dia);
+      if (data.getFullYear() === ano && data.getMonth() === mes - 1 && data.getDate() === dia && ano >= 1900) {
+        onChange(`${d.slice(4,8)}-${d.slice(2,4)}-${d.slice(0,2)}`);
+      }
+    }
   };
   return (
     <input value={text} onChange={handleChange} inputMode="numeric" placeholder="dd/mm/aaaa"
