@@ -217,7 +217,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         )}
       </div>
 
-<<<<<<< HEAD
       {/* Menu de ações */}
       {menuOpen && (() => {
         const oAtual = orcamentos.find(x => x.id === menuOpen);

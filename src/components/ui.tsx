@@ -80,20 +80,6 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return <textarea style={{ ...inputStyle,resize:'vertical',lineHeight:1.6 }} {...props} />;
 }
 
-export function StatCard({ label, value, badge, iconBg, icon }: { label:string; value:string; badge?:string; iconBg:string; icon:React.ReactNode }) {
-  const up = badge?.startsWith('↑');
-  return (
-    <div style={{ background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,padding:'18px 20px' }}>
-      <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14 }}>
-        <div style={{ width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:iconBg }}>{icon}</div>
-        {badge && <span style={{ fontSize:11,fontWeight:500,padding:'3px 8px',borderRadius:20,background:up?'var(--green-bg)':'var(--red-bg)',color:up?'var(--green)':'var(--red)' }}>{badge}</span>}
-      </div>
-      <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:26,fontWeight:700,letterSpacing:'-0.5px',lineHeight:1 }}>{value}</div>
-      <div style={{ fontSize:12.5,color:'var(--text2)',marginTop:5 }}>{label}</div>
-    </div>
-  );
-}
-
 export function Modal({ open, onClose, title, children, width=520 }: { open:boolean; onClose:()=>void; title:string; children:React.ReactNode; width?:number }) {
   if (!open) return null;
   return (

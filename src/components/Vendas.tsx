@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Venda, PagamentoVenda, SituacaoVenda, LineItem, Cliente } from '../types';
 import { fmtMoeda, CurrencyInput } from './ui';
 import { calcularSituacaoVenda } from '../data';

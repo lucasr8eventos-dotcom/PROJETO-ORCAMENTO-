@@ -99,7 +99,7 @@ describe('Orcamentos', () => {
     render(<Orcamentos {...defaultProps} onDelete={onDelete} />);
     const botoes = screen.getAllByRole('button', { name: /Ações/ });
     fireEvent.click(botoes[0]);
-    fireEvent.click(screen.getByText('🗑️ Excluir'));
+    fireEvent.click(screen.getByText('🗑️ Excluir orçamento'));
     // PR #6 adicionou modal de confirmação
     expect(screen.getByText('Excluir orçamento?')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));

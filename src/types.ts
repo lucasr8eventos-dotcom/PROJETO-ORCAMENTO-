@@ -58,15 +58,6 @@ export interface Produto {
   ativo: boolean;
 }
 
-export interface Tarefa {
-  id: string;
-  titulo: string;
-  prioridade: 'alta' | 'media' | 'baixa';
-  concluida: boolean;
-  responsavel: string;
-  prazo: string;
-}
-
 export interface Evento {
   id: string;
   titulo: string;
