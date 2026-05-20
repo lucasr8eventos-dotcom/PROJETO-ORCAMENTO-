@@ -25,11 +25,17 @@ export default function Orcamentos({ orcamentos, clientes, onNovo, onEditar, onD
   const [busca, setBusca] = useState('');
   const [filtroCard, setFiltroCard] = useState<FiltroCard>('todos');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    const right = window.innerWidth - rect.right;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < 300) {
+      setMenuPos({ bottom: window.innerHeight - rect.top + 4, right });
+    } else {
+      setMenuPos({ top: rect.bottom + 4, right });
+    }
     setMenuOpen(menuOpen === id ? null : id);
   };
 
@@ -190,7 +196,7 @@ export default function Orcamentos({ orcamentos, clientes, onNovo, onEditar, onD
       {menuOpen && (
         <>
           <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />
-          <div style={{ position:'fixed',top:menuPos.top,right:menuPos.right,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:200,boxShadow:'0 4px 20px rgba(0,0,0,0.12)' }}>
+          <div style={{ position:'fixed',top:menuPos.top,bottom:menuPos.bottom,right:menuPos.right,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:200,boxShadow:'0 4px 20px rgba(0,0,0,0.12)' }}>
             <div style={{ padding:'6px 12px 4px',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.5px' }}>ALTERAR STATUS</div>
             {(['enviado','aprovado','aguardando','recusado','rascunho'] as OrcamentoStatus[]).map(s=>(
               <button key={s} onClick={()=>{const o=orcamentos.find(x=>x.id===menuOpen);if(o)onStatusChange(o.id,s);setMenuOpen(null);}}
