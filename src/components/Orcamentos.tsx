@@ -217,7 +217,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         )}
       </div>
 
-<<<<<<< HEAD
       {/* Menu de ações */}
       {menuOpen && (() => {
         const oAtual = orcamentos.find(x => x.id === menuOpen);
@@ -291,7 +290,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
               <div style={{ display:'flex',gap:10,justifyContent:'center' }}>
                 <button onClick={()=>setConfirmDelete(null)}
                   style={{ padding:'9px 20px',borderRadius:9,border:'1px solid var(--border)',background:'none',cursor:'pointer',fontSize:13,color:'var(--text)' }}>Cancelar</button>
-                <button onClick={()=>{ onDelete(confirmDelete); setConfirmDelete(null); }}
+                <button onClick={()=>{ onDelete(confirmDelete!); setConfirmDelete(null); }}
                   style={{ padding:'9px 20px',borderRadius:9,border:'none',background:'var(--red)',color:'#fff',cursor:'pointer',fontSize:13,fontWeight:600 }}>Excluir</button>
               </div>
             </div>
