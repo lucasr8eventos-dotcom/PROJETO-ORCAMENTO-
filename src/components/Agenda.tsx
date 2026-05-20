@@ -99,6 +99,8 @@ export default function Agenda({ eventos, onSalvar, onDelete, onToggle }: Props)
           const evDia = eventosFiltrados.filter(e => e.data === diaStr);
           const isHoje = isSameDay(dia, new Date());
 
+          if (filtro !== 'todos' && evDia.length === 0) return null;
+
           return (
             <div key={diaStr} style={{ display:'flex',gap:16 }}>
               <div style={{ width:52,flexShrink:0,textAlign:'center',paddingTop:4 }}>
@@ -112,14 +114,12 @@ export default function Agenda({ eventos, onSalvar, onDelete, onToggle }: Props)
               </div>
               <div style={{ flex:1 }}>
                 {evDia.length === 0 ? (
-                  filtro === 'todos' ? (
-                    <div
-                      onClick={()=>abrirNovo(diaStr)}
-                      style={{ height:40,border:'1.5px dashed var(--border)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text3)',fontSize:13,transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--border2)';e.currentTarget.style.background='var(--surface2)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='transparent'}}
-                    >+ Adicionar evento</div>
-                  ) : null
+                  <div
+                    onClick={()=>abrirNovo(diaStr)}
+                    style={{ height:40,border:'1.5px dashed var(--border)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text3)',fontSize:13,transition:'all .15s' }}
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--border2)';e.currentTarget.style.background='var(--surface2)'}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='transparent'}}
+                  >+ Adicionar evento</div>
                 ) : (
                   <div style={{ display:'flex',flexDirection:'column',gap:6 }}>
                     {evDia.map(ev => {

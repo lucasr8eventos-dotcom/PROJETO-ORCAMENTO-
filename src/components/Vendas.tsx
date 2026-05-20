@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Venda, PagamentoVenda, SituacaoVenda, LineItem, Cliente } from '../types';
 import { fmtMoeda, CurrencyInput } from './ui';
 import { calcularSituacaoVenda } from '../data';
@@ -46,7 +46,7 @@ export default function Vendas({ vendas, clientes, userRole, onSalvar, onCriarDi
   const [editPag, setEditPag] = useState<Partial<PagamentoVenda>>({});
   const [showAddPag, setShowAddPag] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [editVendaId, setEditVendaId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ contato: string; observacoes: string }>({ contato: '', observacoes: '' });
@@ -58,7 +58,13 @@ export default function Vendas({ vendas, clientes, userRole, onSalvar, onCriarDi
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    const right = window.innerWidth - rect.right;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < 300) {
+      setMenuPos({ bottom: window.innerHeight - rect.top + 4, right });
+    } else {
+      setMenuPos({ top: rect.bottom + 4, right });
+    }
     setMenuOpen(menuOpen === id ? null : id);
   };
 
@@ -228,7 +234,7 @@ export default function Vendas({ vendas, clientes, userRole, onSalvar, onCriarDi
         return (
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(null)} />
-            <div style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, zIndex: 50, minWidth: 210, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
+            <div style={{ position: 'fixed', top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, zIndex: 50, minWidth: 210, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
               {menuBtn(() => { setDetalheId(menuOpen); setMenuOpen(null); }, '📋 Ver detalhes / pagamentos')}
               {menuBtn(() => {
                 if (!podeEditar) return;

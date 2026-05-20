@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { OrdemServico as OS, OSStatus } from '../types';
 import { fmtMoeda } from './ui';
@@ -191,14 +191,20 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
   const [editId, setEditId] = useState<string | null>(null);
   const [printId, setPrintId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<OS>>({});
   const [showRelatorio, setShowRelatorio] = useState(false);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    const right = window.innerWidth - rect.right;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < 300) {
+      setMenuPos({ bottom: window.innerHeight - rect.top + 4, right });
+    } else {
+      setMenuPos({ top: rect.bottom + 4, right });
+    }
     setMenuOpen(menuOpen === id ? null : id);
   };
 
@@ -350,46 +356,55 @@ export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, fil
       </div>
 
       {/* Menu de ações */}
-      {menuOpen && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(null)} />
-          <div style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, zIndex: 50, minWidth: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
-            <div style={{ padding: '6px 12px 4px', fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', letterSpacing: '0.5px' }}>ALTERAR STATUS</div>
-            {(['pendente', 'em_andamento', 'concluida', 'cancelada'] as OSStatus[]).map(s => (
-              <button key={s} onClick={() => { const os = ordens.find(o => o.id === menuOpen); if (os) onSalvar({ ...os, status: s }); setMenuOpen(null); }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
+      {menuOpen && (() => {
+        const osAtual = ordens.find(o => o.id === menuOpen);
+        return (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(null)} />
+            <div style={{ position: 'fixed', top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, zIndex: 50, minWidth: 210, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
+              <div style={{ padding: '6px 12px 2px', fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.5px' }}>STATUS</div>
+              {(['pendente', 'em_andamento', 'concluida', 'cancelada'] as OSStatus[]).map(s => {
+                const isAtual = osAtual?.status === s;
+                return (
+                  <button key={s} onClick={() => { if (osAtual) onSalvar({ ...osAtual, status: s }); setMenuOpen(null); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 12px', border: 'none', background: isAtual ? 'var(--surface2)' : 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)', fontWeight: isAtual ? 600 : 400 }}
+                    onMouseEnter={e => { if (!isAtual) e.currentTarget.style.background = 'var(--surface2)'; }}
+                    onMouseLeave={e => { if (!isAtual) e.currentTarget.style.background = 'transparent'; }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusMap[s].color, flexShrink: 0 }} />
+                    {statusMap[s].label}
+                    {isAtual && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text3)' }}>✓ atual</span>}
+                  </button>
+                );
+              })}
+              <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+              <div style={{ padding: '6px 12px 2px', fontSize: 10.5, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.5px' }}>AÇÕES</div>
+              <button onClick={() => { if (osAtual) abrirEdicao(osAtual); setMenuOpen(null); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                {statusMap[s].label}
+                ✏️ Editar OS
               </button>
-            ))}
-            <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-            <button onClick={() => { const os = ordens.find(o => o.id === menuOpen); if (os) abrirEdicao(os); setMenuOpen(null); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              ✏️ Editar OS
-            </button>
-            <button onClick={() => { setPrintId(menuOpen); setMenuOpen(null); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              🖨️ Imprimir OS
-            </button>
-            {isAdmin && (
-              <>
-                <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                <button onClick={() => { setConfirmDelete(menuOpen); setMenuOpen(null); }}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--red)' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  🗑️ Excluir OS
-                </button>
-              </>
-            )}
-          </div>
-        </>
-      )}
+              <button onClick={() => { setPrintId(menuOpen); setMenuOpen(null); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                🖨️ Imprimir OS
+              </button>
+              {isAdmin && (
+                <>
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                  <button onClick={() => { setConfirmDelete(menuOpen); setMenuOpen(null); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--red)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    🗑️ Excluir OS
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Modal de edição */}
       {editId && form.id && (

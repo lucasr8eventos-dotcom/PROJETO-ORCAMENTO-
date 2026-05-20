@@ -23,6 +23,11 @@ export default function Configuracoes() {
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Arquivo muito grande. O logo deve ter no máximo 2MB.');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setForm(p=>({...p,logo:reader.result as string}));
     reader.readAsDataURL(file);

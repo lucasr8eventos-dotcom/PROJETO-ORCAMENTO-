@@ -30,14 +30,20 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
   const [busca, setBusca] = useState('');
   const [filtroCard, setFiltroCard] = useState<FiltroCard>('todos');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showRelatorio, setShowRelatorio] = useState(false);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    const right = window.innerWidth - rect.right;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < 300) {
+      setMenuPos({ bottom: window.innerHeight - rect.top + 4, right });
+    } else {
+      setMenuPos({ top: rect.bottom + 4, right });
+    }
     setMenuOpen(menuOpen === id ? null : id);
   };
 
@@ -211,6 +217,61 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         )}
       </div>
 
+<<<<<<< HEAD
+      {/* Menu de ações */}
+      {menuOpen && (() => {
+        const oAtual = orcamentos.find(x => x.id === menuOpen);
+        const statusOpts: { s: OrcamentoStatus; label: string; dot: string }[] = [
+          { s: 'rascunho',   label: 'Rascunho',   dot: '#9ca3af' },
+          { s: 'enviado',    label: 'Enviado',     dot: 'var(--blue)' },
+          { s: 'aguardando', label: 'Aguardando',  dot: 'var(--amber)' },
+          { s: 'aprovado',   label: 'Aprovado',    dot: 'var(--green)' },
+          { s: 'recusado',   label: 'Recusado',    dot: 'var(--red)' },
+        ];
+        return (
+          <>
+            <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />
+            <div style={{ position:'fixed',top:menuPos.top,bottom:menuPos.bottom,right:menuPos.right,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:210,boxShadow:'0 4px 20px rgba(0,0,0,0.12)' }}>
+              <div style={{ padding:'6px 12px 2px',fontSize:10.5,fontWeight:600,color:'var(--text3)',letterSpacing:'0.5px' }}>STATUS</div>
+              {statusOpts.map(({ s, label, dot }) => {
+                const isAtual = oAtual?.status === s;
+                return (
+                  <button key={s} onClick={() => { if (oAtual) onStatusChange(oAtual.id, s); setMenuOpen(null); }}
+                    style={{ display:'flex',alignItems:'center',gap:8,width:'100%',textAlign:'left',padding:'7px 12px',border:'none',background: isAtual ? 'var(--surface2)' : 'none',cursor:'pointer',fontSize:13,borderRadius:7,color: isAtual ? 'var(--text)' : 'var(--text)',fontWeight: isAtual ? 600 : 400 }}
+                    onMouseEnter={e => { if (!isAtual) e.currentTarget.style.background = 'var(--surface2)'; }}
+                    onMouseLeave={e => { if (!isAtual) e.currentTarget.style.background = 'transparent'; }}>
+                    <span style={{ width:8,height:8,borderRadius:'50%',background:dot,flexShrink:0 }} />
+                    {label}
+                    {isAtual && <span style={{ marginLeft:'auto',fontSize:11,color:'var(--text3)' }}>✓ atual</span>}
+                  </button>
+                );
+              })}
+              <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
+              <div style={{ padding:'6px 12px 2px',fontSize:10.5,fontWeight:600,color:'var(--text3)',letterSpacing:'0.5px' }}>AÇÕES</div>
+              <button onClick={()=>{if(oAtual)onEditar(oAtual);setMenuOpen(null);}}
+                style={{ display:'flex',alignItems:'center',gap:8,width:'100%',textAlign:'left',padding:'7px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
+                onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
+                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                ✏️ Editar orçamento
+              </button>
+              <button onClick={()=>{if(oAtual)onDuplicar(oAtual);setMenuOpen(null);}}
+                style={{ display:'flex',alignItems:'center',gap:8,width:'100%',textAlign:'left',padding:'7px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
+                onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
+                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                📋 Duplicar orçamento
+              </button>
+              <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
+              <button onClick={()=>{ setConfirmDelete(menuOpen); setMenuOpen(null); }}
+                style={{ display:'flex',alignItems:'center',gap:8,width:'100%',textAlign:'left',padding:'7px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--red)' }}
+                onMouseEnter={e=>(e.currentTarget.style.background='rgba(239,68,68,0.08)')}
+                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                🗑️ Excluir orçamento
+              </button>
+            </div>
+          </>
+        );
+      })()}
+
       {confirmDelete && (() => {
         const temVenda = vendas.some(v => v.orcamentoId === confirmDelete);
         const orc = orcamentos.find(o => o.id === confirmDelete);
@@ -237,43 +298,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
           </div>
         );
       })()}
-
-      {menuOpen && (
-        <>
-          <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />
-          <div style={{ position:'fixed',top:menuPos.top,right:menuPos.right,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:4,zIndex:50,minWidth:200,boxShadow:'0 4px 20px rgba(0,0,0,0.12)' }}>
-            <div style={{ padding:'6px 12px 4px',fontSize:10.5,fontWeight:500,color:'var(--text3)',letterSpacing:'0.5px' }}>ALTERAR STATUS</div>
-            {(['enviado','aprovado','aguardando','recusado','rascunho','cancelado'] as OrcamentoStatus[]).map(s=>(
-              <button key={s} onClick={()=>{const o=orcamentos.find(x=>x.id===menuOpen);if(o)onStatusChange(o.id,s);setMenuOpen(null);}}
-                style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color: s==='cancelado' ? 'var(--red)' : 'var(--text)' }}
-                onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-                onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-                {s === 'aguardando' ? 'Aguardando' : s === 'enviado' ? 'Enviado' : s === 'aprovado' ? 'Aprovado' : s === 'recusado' ? 'Recusado' : s === 'cancelado' ? 'Cancelado' : 'Rascunho'}
-              </button>
-            ))}
-            <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
-            <button onClick={()=>{const o=orcamentos.find(x=>x.id===menuOpen);if(o)onEditar(o);setMenuOpen(null);}}
-              style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
-              onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-              ✏️ Editar orçamento
-            </button>
-            <button onClick={()=>{const o=orcamentos.find(x=>x.id===menuOpen);if(o)onDuplicar(o);setMenuOpen(null);}}
-              style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--text)' }}
-              onMouseEnter={e=>(e.currentTarget.style.background='var(--surface2)')}
-              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-              📋 Duplicar orçamento
-            </button>
-            <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
-            <button onClick={()=>{ setConfirmDelete(menuOpen); setMenuOpen(null); }}
-              style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--red)' }}
-              onMouseEnter={e=>(e.currentTarget.style.background='var(--red-bg)')}
-              onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-              🗑️ Excluir
-            </button>
-          </div>
-        </>
-      )}
 
       {showRelatorio && (
         <Relatorio tipo="orcamentos" orcamentos={orcamentos} onFechar={() => setShowRelatorio(false)} />
